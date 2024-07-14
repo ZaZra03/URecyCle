@@ -110,6 +110,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
 
+    precacheImage(const AssetImage('lib/assets/icon/logo.png'), context);
+
     return Scaffold(
       backgroundColor: const Color(0xFF5DB075),
       body: Center(
