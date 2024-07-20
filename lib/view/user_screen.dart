@@ -58,8 +58,8 @@ class _UserScreen extends State<UserScreen> {
         },
         backgroundColor: Constants.secondaryColor,
         foregroundColor: _selectedIndex == 2
-            ? Colors.white // Highlighted color
-            : Colors.black, // Default color
+            ? Colors.black // Highlighted color
+            : Colors.white, // Default color
         shape: CircleBorder(),
         child: Icon(Icons.document_scanner_outlined),
       ),
@@ -74,7 +74,7 @@ class _UserScreen extends State<UserScreen> {
           children: <Widget>[
             IconButton(
               icon: Icon(Icons.home_outlined),
-              color: _selectedIndex == 0 ? Colors.white : Colors.black,
+              color: _selectedIndex == 0 ? Colors.white : Constants.gray04Color,
               onPressed: () {
                 setState(() {
                   _selectedIndex = 0;
@@ -84,7 +84,7 @@ class _UserScreen extends State<UserScreen> {
             ),
             IconButton(
               icon: Icon(Icons.history),
-              color: _selectedIndex == 1 ? Colors.white : Colors.black,
+              color: _selectedIndex == 1 ? Colors.white : Constants.gray04Color,
               onPressed: () {
                 setState(() {
                   _selectedIndex = 1;
@@ -95,7 +95,7 @@ class _UserScreen extends State<UserScreen> {
             SizedBox(width: 40), // Spacer for FAB
             IconButton(
               icon: Icon(Icons.notifications),
-              color: _selectedIndex == 3 ? Colors.white : Colors.black,
+              color: _selectedIndex == 3 ? Colors.white : Constants.gray04Color,
               onPressed: () {
                 setState(() {
                   _selectedIndex = 3;
@@ -105,7 +105,7 @@ class _UserScreen extends State<UserScreen> {
             ),
             IconButton(
               icon: Icon(Icons.account_circle_outlined),
-              color: _selectedIndex == 4 ? Colors.white : Colors.black,
+              color: _selectedIndex == 4 ? Colors.white : Constants.gray04Color,
               onPressed: () {
                 setState(() {
                   _selectedIndex = 4;

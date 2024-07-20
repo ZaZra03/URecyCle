@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:urecycle_app/constants.dart';
-import 'user_home.dart';
+import 'user_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -91,22 +91,26 @@ class _LoginScreenState extends State<LoginScreen> {
       elevation: 5,
       borderRadius: BorderRadius.circular(30),
       color: Colors.white,
-      child: MaterialButton(
-        padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-        minWidth: MediaQuery.of(context).size.width,
-        onPressed: () {
+      child: InkWell(
+        borderRadius: BorderRadius.circular(30),
+        onTap: () {
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const UserScreen()),
           );
         },
-        child: const Text(
-          "Login",
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 20,
-            color: Colors.black,
-            fontWeight: FontWeight.bold,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+          width: MediaQuery.of(context).size.width,
+          alignment: Alignment.center,
+          child: const Text(
+            "Login",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 20,
+              color: Colors.black,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),
