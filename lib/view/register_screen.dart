@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:urecycle_app/constants.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -221,7 +222,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF5DB075),
+      backgroundColor: Constants.primaryColor,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -236,7 +237,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            color: const Color(0xFF5DB075),
+            color: Constants.primaryColor,
             padding: const EdgeInsets.all(30.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -245,7 +246,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 SizedBox(
                   height: 170,
                   child: Image.asset(
-                    "lib/assets/icon/logo.png",
+                    "assets/icon/logo.png",
                     fit: BoxFit.contain,
                   ),
                 ),

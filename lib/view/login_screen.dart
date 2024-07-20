@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:urecycle_app/constants.dart';
 import 'user_home.dart';
 import 'register_screen.dart';
 
@@ -96,7 +97,7 @@ class _LoginScreenState extends State<LoginScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => const BottomNavBar()),
+            MaterialPageRoute(builder: (context) => const UserScreen()),
           );
         },
         child: const Text(
@@ -112,11 +113,11 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFF5DB075),
+      backgroundColor: Constants.primaryColor,
       body: Center(
         child: SingleChildScrollView(
           child: Container(
-            color: const Color(0xFF5DB075),
+            color: Constants.primaryColor,
             child: Padding(
               padding: const EdgeInsets.all(36.0),
               child: Form(
@@ -128,7 +129,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     SizedBox(
                       height: 200,
                       child: Image.asset(
-                        "lib/assets/icon/logo.png",
+                        "assets/icon/logo.png",
                         fit: BoxFit.contain,
                       ),
                     ),

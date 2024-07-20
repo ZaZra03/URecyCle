@@ -1,147 +1,130 @@
 import 'package:flutter/material.dart';
+import 'package:urecycle_app/constants.dart';
+import 'package:urecycle_app/view/page/home_page.dart';
+import 'package:urecycle_app/view/page/history_page.dart';
+import 'package:urecycle_app/view/page/notification_page.dart';
+import 'package:urecycle_app/view/page/profile_page.dart';
 
-class BottomNavBar extends StatefulWidget {
-  const BottomNavBar({super.key});
+
+class UserScreen extends StatefulWidget {
+  const UserScreen({super.key});
 
   @override
-  State createState() => _BottomNavBarState();
+  State createState() => _UserScreen();
 }
 
-class _BottomNavBarState extends State<BottomNavBar> {
-  int currentIndex = 0;
-
-  setBottomBarIndex(index) {
-    setState(() {
-      currentIndex = index;
-    });
-  }
+class _UserScreen extends State<UserScreen> {
+  final PageController pageController = PageController(initialPage: 0);
+  int _selectedIndex = 0;
 
   @override
   Widget build(BuildContext context) {
-    final Size size = MediaQuery.of(context).size;
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Positioned(
-            bottom: 0,
-            left: 0,
-            child: SizedBox(
-              width: size.width,
-              height: 80,
-              child: Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  CustomPaint(
-                    size: Size(size.width, 80),
-                    painter: BNBCustomPainter(),
-                  ),
-                  Center(
-                    heightFactor: 0.6,
-                    child: FloatingActionButton(
-                      backgroundColor: Colors.green,
-                      foregroundColor: currentIndex == 4
-                          ? Colors.black // Highlighted color
-                          : Colors.white, // Default color
-                      elevation: 0.1,
-                      onPressed: () {
-                        setBottomBarIndex(4); // Set index for FAB
-                      },
-                      shape: const CircleBorder(),
-                      child: const Icon(Icons.document_scanner_outlined),
-                    ),
-                  ),
-                  SizedBox(
-                    width: size.width,
-                    height: 80,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: [
-                        IconButton(
-                          icon: Icon(
-                            Icons.home,
-                            color: currentIndex == 0
-                                ? Colors.black
-                                : Colors.white,
-                          ),
-                          onPressed: () {
-                            setBottomBarIndex(0);
-                          },
-                          splashColor: Colors.white,
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.history,
-                            color: currentIndex == 1
-                                ? Colors.black
-                                : Colors.white,
-                          ),
-                          onPressed: () {
-                            setBottomBarIndex(1);
-                          },
-                        ),
-                        Container(
-                          width: size.width * 0.20,
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.notifications,
-                            color: currentIndex == 2
-                                ? Colors.black
-                                : Colors.white,
-                          ),
-                          onPressed: () {
-                            setBottomBarIndex(2);
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            Icons.person,
-                            color: currentIndex == 3
-                                ? Colors.black
-                                : Colors.white,
-                          ),
-                          onPressed: () {
-                            setBottomBarIndex(3);
-                          },
-                        ),
-                      ],
-                    ),
-                  )
-                ],
-              ),
+      appBar: AppBar(
+      ),
+      body: SafeArea(
+        child: PageView(
+          controller: pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          children: const <Widget>[
+            Center(
+              child: Home(),
             ),
-          )
-        ],
+            Center(
+              child: History(),
+            ),
+            Center(
+              child: Scan(),
+            ),
+            Center(
+              child: Notifications(),
+            ),
+            Center(
+              child: Profile(),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _selectedIndex = 2;
+            pageController.jumpToPage(2);
+          });
+        },
+        backgroundColor: Constants.secondaryColor,
+        foregroundColor: _selectedIndex == 2
+            ? Colors.white // Highlighted color
+            : Colors.black, // Default color
+        shape: CircleBorder(),
+        child: Icon(Icons.document_scanner_outlined),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        color: Constants.primaryColor,
+        notchMargin: 10.0,
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            IconButton(
+              icon: Icon(Icons.home_outlined),
+              color: _selectedIndex == 0 ? Colors.white : Colors.black,
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 0;
+                  pageController.jumpToPage(0);
+                });
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.history),
+              color: _selectedIndex == 1 ? Colors.white : Colors.black,
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 1;
+                  pageController.jumpToPage(1);
+                });
+              },
+            ),
+            SizedBox(width: 40), // Spacer for FAB
+            IconButton(
+              icon: Icon(Icons.notifications),
+              color: _selectedIndex == 3 ? Colors.white : Colors.black,
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 3;
+                  pageController.jumpToPage(3);
+                });
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.account_circle_outlined),
+              color: _selectedIndex == 4 ? Colors.white : Colors.black,
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 4;
+                  pageController.jumpToPage(4);
+                });
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class BNBCustomPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    Paint paint = Paint()
-      ..color = const Color(0xFF5DB075)
-      ..style = PaintingStyle.fill;
-
-    Path path = Path();
-    path.moveTo(0, 20); // Start
-    path.quadraticBezierTo(size.width * 0.20, 0, size.width * 0.35, 0);
-    path.quadraticBezierTo(size.width * 0.40, 0, size.width * 0.40, 20);
-    path.arcToPoint(Offset(size.width * 0.60, 20),
-        radius: const Radius.circular(20.0), clockwise: false);
-    path.quadraticBezierTo(size.width * 0.60, 0, size.width * 0.65, 0);
-    path.quadraticBezierTo(size.width * 0.80, 0, size.width, 20);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.lineTo(0, 20);
-    canvas.drawShadow(path, Colors.black, 5, true);
-    canvas.drawPath(path, paint);
-  }
+class Scan extends StatelessWidget {
+  const Scan({Key? key}) : super(key: key);
 
   @override
-  bool shouldRepaint(CustomPainter oldDelegate) {
-    return false;
+  Widget build(BuildContext context) {
+    return const Text('Scan');
   }
 }
