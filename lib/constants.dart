@@ -4,6 +4,15 @@ class Constants {
   //Primary color
   static var primaryColor = const Color(0xFF5DB075);
   static var secondaryColor = const Color(0xFF4B9460);
+  static var blackColor = Colors.black54;
+
+  //Gray color
+  static var gray01Color = const Color(0xFFF6F6F6);
+  static var gray02Color = const Color(0xFFE8E8E8);
+  static var gray03Color = const Color(0xFFBDBDBD);
+  static var gray04Color = const Color(0xFF666666);
+
+
 
   //Onboarding texts
   static var titleOne = "Learn more about plants";
