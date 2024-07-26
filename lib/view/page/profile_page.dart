@@ -3,7 +3,7 @@ import 'package:urecycle_app/view/widget/profile_widget.dart';
 import 'package:urecycle_app/constants.dart';
 
 class Profile extends StatelessWidget {
-  const Profile({Key? key}) : super(key: key);
+  const Profile({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -18,22 +18,22 @@ class Profile extends StatelessWidget {
             children: [
               Container(
                 width: 150,
-                child: CircleAvatar(
-                  radius: 60, // Adjusts the size of the CircleAvatar
-                  backgroundColor: Colors.grey,
-                  child: const Text(
-                    "EM",
-                    style: TextStyle(
-                      fontSize: 24, // Adjusts the text size
-                      color: Colors.white, // Sets the text color to white
-                    ),
-                  ),
-                ),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: Constants.primaryColor.withOpacity(.5),
                     width: 5.0,
+                  ),
+                ),
+                child: const CircleAvatar(
+                  radius: 60, // Adjusts the size of the CircleAvatar
+                  backgroundColor: Colors.grey,
+                  child: Text(
+                    "EM",
+                    style: TextStyle(
+                      fontSize: 24, // Adjusts the text size
+                      color: Colors.white, // Sets the text color to white
+                    ),
                   ),
                 ),
               ),
@@ -66,9 +66,9 @@ class Profile extends StatelessWidget {
                 child: SizedBox(
                   height: size.height * .7,
                   width: size.width,
-                  child: Column(
+                  child: const Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
-                    children: const [
+                    children: [
                       ProfileWidget(
                         icon: Icons.settings,
                         title: 'Account Settings',

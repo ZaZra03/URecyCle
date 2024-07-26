@@ -5,10 +5,10 @@ class ProfileWidget extends StatelessWidget {
   final IconData icon;
   final String title;
   const ProfileWidget({
-    Key? key,
+    super.key,
     required this.icon,
     required this.title,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

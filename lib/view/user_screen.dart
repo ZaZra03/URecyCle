@@ -5,7 +5,6 @@ import 'package:urecycle_app/view/page/history_page.dart';
 import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
 
-
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
 
@@ -20,8 +19,7 @@ class _UserScreen extends State<UserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-      ),
+      appBar: AppBar(),
       body: SafeArea(
         child: PageView(
           controller: pageController,
@@ -60,8 +58,8 @@ class _UserScreen extends State<UserScreen> {
         foregroundColor: _selectedIndex == 2
             ? Colors.black // Highlighted color
             : Colors.white, // Default color
-        shape: CircleBorder(),
-        child: Icon(Icons.document_scanner_outlined),
+        shape: const CircleBorder(),
+        child: const Icon(Icons.document_scanner_outlined),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
@@ -73,7 +71,7 @@ class _UserScreen extends State<UserScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: <Widget>[
             IconButton(
-              icon: Icon(Icons.home_outlined),
+              icon: const Icon(Icons.home_outlined),
               color: _selectedIndex == 0 ? Colors.white : Constants.gray04Color,
               onPressed: () {
                 setState(() {
@@ -83,7 +81,7 @@ class _UserScreen extends State<UserScreen> {
               },
             ),
             IconButton(
-              icon: Icon(Icons.history),
+              icon: const Icon(Icons.history),
               color: _selectedIndex == 1 ? Colors.white : Constants.gray04Color,
               onPressed: () {
                 setState(() {
@@ -92,9 +90,9 @@ class _UserScreen extends State<UserScreen> {
                 });
               },
             ),
-            SizedBox(width: 40), // Spacer for FAB
+            const SizedBox(width: 40), // Spacer for FAB
             IconButton(
-              icon: Icon(Icons.notifications),
+              icon: const Icon(Icons.notifications),
               color: _selectedIndex == 3 ? Colors.white : Constants.gray04Color,
               onPressed: () {
                 setState(() {
@@ -104,7 +102,7 @@ class _UserScreen extends State<UserScreen> {
               },
             ),
             IconButton(
-              icon: Icon(Icons.account_circle_outlined),
+              icon: const Icon(Icons.account_circle_outlined),
               color: _selectedIndex == 4 ? Colors.white : Constants.gray04Color,
               onPressed: () {
                 setState(() {
@@ -121,7 +119,7 @@ class _UserScreen extends State<UserScreen> {
 }
 
 class Scan extends StatelessWidget {
-  const Scan({Key? key}) : super(key: key);
+  const Scan({super.key});
 
   @override
   Widget build(BuildContext context) {
