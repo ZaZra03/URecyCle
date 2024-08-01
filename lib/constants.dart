@@ -12,7 +12,10 @@ class Constants {
   static var gray03Color = const Color(0xFFBDBDBD);
   static var gray04Color = const Color(0xFF666666);
 
-
+  //Routes
+  static const url = 'http://192.168.18.10:3000/';
+  static const register = '${url}register';
+  static const login = '${url}login';
 
   //Onboarding texts
   static var titleOne = "Learn more about plants";
