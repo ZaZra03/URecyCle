@@ -23,14 +23,14 @@ class UserModel {
     };
   }
 
-  // Create a UserModel object from a map
-  factory UserModel.fromMap(Map<String, dynamic> map) {
-    return UserModel(
-      email: map['email'],
-      password: '', // Do not store password in Firestore for security reasons
-      firstName: map['firstName'],
-      lastName: map['lastName'],
-      studentNumber: map['studentNumber'],
-    );
-  }
+  // // Create a UserModel object from a map
+  // factory UserModel.fromMap(Map<String, dynamic> map) {
+  //   return UserModel(
+  //     email: map['email'],
+  //     password: '', // Do not store password in Firestore for security reasons
+  //     firstName: map['firstName'],
+  //     lastName: map['lastName'],
+  //     studentNumber: map['studentNumber'],
+  //   );
+  // }
 }

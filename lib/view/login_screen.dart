@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:urecycle_app/constants.dart';
-import 'user_screen.dart';
-import 'register_screen.dart';
+import 'package:urecycle_app/widgets/auth_textfield.dart';
+import 'package:urecycle_app/services/auth_service.dart';
+import 'package:urecycle_app/view/user_screen.dart';
+import 'package:urecycle_app/view/register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,111 +13,44 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  // form key
   final _formKey = GlobalKey<FormState>();
-
-  // editing controller
   final TextEditingController studentIDController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
-  // firebase
+  final AuthService _authService = AuthService();
 
-  // string for displaying the error Message
-  String? errorMessage;
+  Future<void> _login() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        // Perform the login operation
+        await _authService.loginUser(
+          studentNumber: studentIDController.text,
+          password: passwordController.text,
+        );
+
+        // Check if the widget is still mounted before navigating
+        if (!mounted) return;
+
+        // Navigate to another screen after login
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UserScreen()),
+        );
+      } catch (e) {
+        // Check if the widget is still mounted before showing the Snackbar
+        if (!mounted) return;
+
+        // Show an error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: $e')),
+        );
+      }
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    // email field
-    final emailField = TextFormField(
-      autofocus: false,
-      controller: studentIDController,
-      keyboardType: TextInputType.number,
-      validator: (value) {
-        if (value!.isEmpty) {
-          return "Please Enter Your Student ID Number";
-        }
-        // reg expression for email validation
-        // if (!RegExp("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+.[a-z]").hasMatch(value)) {
-        //   return "Please Enter a valid email";
-        // }
-        return null;
-      },
-      onSaved: (value) {
-        studentIDController.text = value!;
-      },
-      textInputAction: TextInputAction.next,
-      decoration: InputDecoration(
-        fillColor: Colors.white, // Background color of the text field
-        filled: true, // Needed to apply the fillColor
-        prefixIcon: const Icon(Icons.person),
-        contentPadding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-        hintText: "Student ID",
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
-
-    // password field
-    final passwordField = TextFormField(
-      autofocus: false,
-      controller: passwordController,
-      obscureText: true,
-      validator: (value) {
-        RegExp regex = RegExp(r'^.{6,}$');
-        if (value!.isEmpty) {
-          return "Password is required for login";
-        }
-        if (!regex.hasMatch(value)) {
-          return "Enter Valid Password(Min. 6 Character)";
-        }
-        return null;
-      },
-      onSaved: (value) {
-        passwordController.text = value!;
-      },
-      textInputAction: TextInputAction.done,
-      decoration: InputDecoration(
-        fillColor: Colors.white, // Background color of the text field
-        filled: true, // Needed to apply the fillColor
-        prefixIcon: const Icon(Icons.vpn_key),
-        contentPadding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-        hintText: "Password",
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-    );
-
-    final loginButton = Material(
-      elevation: 5,
-      borderRadius: BorderRadius.circular(30),
-      color: Colors.white,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(30),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const UserScreen()),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-          width: MediaQuery.of(context).size.width,
-          alignment: Alignment.center,
-          child: const Text(
-            "Login",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.black,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ),
-    );
-
     return Scaffold(
       backgroundColor: Constants.primaryColor,
       body: Center(
@@ -138,36 +73,89 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     const SizedBox(height: 45),
-                    emailField,
+                    AuthTextField(
+                      controller: studentIDController,
+                      hintText: "Student ID",
+                      icon: Icons.person,
+                      keyboardType: TextInputType.number,
+                      textInputAction: TextInputAction.next,
+                      validator: (value) {
+                        if (value!.isEmpty) {
+                          return "Please Enter Your Student ID Number";
+                        }
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 25),
-                    passwordField,
+                    AuthTextField(
+                      controller: passwordController,
+                      hintText: "Password",
+                      icon: Icons.vpn_key,
+                      obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      validator: (value) {
+                        RegExp regex = RegExp(r'^.{6,}$');
+                        if (value!.isEmpty) {
+                          return "Password is required for login";
+                        }
+                        if (!regex.hasMatch(value)) {
+                          return "Enter Valid Password(Min. 6 Character)";
+                        }
+                        return null;
+                      },
+                    ),
                     const SizedBox(height: 35),
-                    loginButton,
+                    Material(
+                      elevation: 5,
+                      borderRadius: BorderRadius.circular(30),
+                      color: Colors.white,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(30),
+                        onTap: _login,
+                        child: Container(
+                          padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                          width: MediaQuery.of(context).size.width,
+                          alignment: Alignment.center,
+                          child: const Text(
+                            "Login",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.black,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                     const SizedBox(height: 15),
                     Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          const Text(
-                            "Don't have an account? ",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          const RegistrationScreen()));
-                            },
-                            child: const Text(
-                              "Sign Up",
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 15),
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        const Text(
+                          "Don't have an account? ",
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RegistrationScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            "Sign Up",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
                             ),
-                          )
-                        ])
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
