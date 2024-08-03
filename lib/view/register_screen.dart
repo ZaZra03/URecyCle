@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/widgets/auth_textfield.dart';
+import 'package:urecycle_app/view/user_screen.dart';
 import 'package:urecycle_app/services/auth_service.dart';
 
 class RegistrationScreen extends StatefulWidget {
@@ -35,6 +36,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
         // Check if the widget is still mounted before showing a SnackBar
         if (!mounted) return;
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const UserScreen()),
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Registration successful: ${response['message']}')),
