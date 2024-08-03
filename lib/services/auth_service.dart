@@ -81,7 +81,7 @@ class AuthService {
       print('Login Response Status Code: ${response.statusCode}');
       print('Login Response Body: ${response.body}');
 
-      if (response.statusCode == 201) {
+      if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
         final Map<String, dynamic> errorResponse = jsonDecode(response.body);
