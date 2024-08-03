@@ -19,7 +19,6 @@ class _UserScreen extends State<UserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(),
       body: SafeArea(
         child: PageView(
           controller: pageController,
