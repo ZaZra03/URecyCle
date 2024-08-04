@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 
 class CustomCard extends StatelessWidget {
   final Widget child;
+  final VoidCallback? onTap;
 
-  const CustomCard({super.key, required this.child});
+  const CustomCard({super.key, required this.child, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -17,13 +18,10 @@ class CustomCard extends StatelessWidget {
             margin: const EdgeInsets.symmetric(vertical: 8.0),
             clipBehavior: Clip.hardEdge,
             elevation: 5,
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             child: InkWell(
               splashColor: Colors.blue.withAlpha(30),
-              onTap: () {
-                debugPrint('Card tapped.');
-              },
+              onTap: onTap,
               child: child,
             ),
           ),

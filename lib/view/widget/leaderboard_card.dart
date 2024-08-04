@@ -3,11 +3,14 @@ import 'custom_card.dart';
 import 'leaderboard_position.dart';
 
 class LeaderboardCard extends StatelessWidget {
-  const LeaderboardCard({super.key});
+  final VoidCallback? onTap;
+
+  const LeaderboardCard({super.key, this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return CustomCard(
+      onTap: onTap,
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -78,7 +81,9 @@ class UserCard extends StatelessWidget {
           child: Text(
             "EM",
             style: TextStyle(
-                color: Colors.white, fontSize: MediaQuery.of(context).size.width * 0.03), // Smaller font size
+              color: Colors.white,
+              fontSize: MediaQuery.of(context).size.width * 0.03,
+            ),
           ),
         ),
         title: Text(
@@ -86,7 +91,7 @@ class UserCard extends StatelessWidget {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: MediaQuery.of(context).size.width * 0.04, // Smaller font size
+            fontSize: MediaQuery.of(context).size.width * 0.04,
           ),
         ),
         subtitle: Column(
@@ -96,14 +101,14 @@ class UserCard extends StatelessWidget {
               'Philippines',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: MediaQuery.of(context).size.width * 0.03, // Smaller font size
+                fontSize: MediaQuery.of(context).size.width * 0.03,
               ),
             ),
             Text(
               '1 goal supported this month',
               style: TextStyle(
                 color: Colors.white,
-                fontSize: MediaQuery.of(context).size.width * 0.03, // Smaller font size
+                fontSize: MediaQuery.of(context).size.width * 0.03,
               ),
             ),
           ],
@@ -112,7 +117,7 @@ class UserCard extends StatelessWidget {
           '₱16.53',
           style: TextStyle(
             color: Colors.white,
-            fontSize: MediaQuery.of(context).size.width * 0.04, // Smaller font size
+            fontSize: MediaQuery.of(context).size.width * 0.04,
           ),
         ),
       ),
