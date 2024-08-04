@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:urecycle_app/constants.dart';
-import 'package:urecycle_app/widgets/auth_textfield.dart';
+import 'package:urecycle_app/view/widget/auth_textfield.dart';
 import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/view/user_screen.dart';
 import 'package:urecycle_app/view/register_screen.dart';
+
+import '../utils/navigation_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,11 +33,8 @@ class _LoginScreenState extends State<LoginScreen> {
         // Check if the widget is still mounted before navigating
         if (!mounted) return;
 
-        // Navigate to another screen after login
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const UserScreen()),
-        );
+        handleTap(context, const UserScreen());
+
       } catch (e) {
         // Check if the widget is still mounted before showing the Snackbar
         if (!mounted) return;
@@ -47,7 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -166,3 +164,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+
