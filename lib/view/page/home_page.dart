@@ -1,20 +1,27 @@
 import 'package:flutter/material.dart';
-import '../../widgets/custom_card.dart';
-import '../../widgets/leaderboard_card.dart';
+
+import '../../utils/navigation_utils.dart';
+import '../leaderboard_screen.dart';
+import '../widget/custom_card.dart';
+import '../widget/leaderboard_card.dart';
 
 class Home extends StatelessWidget {
   const Home({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(0.0),
+          padding: const EdgeInsets.all(0.0),
           child: Column(
             children: [
-              LeaderboardCard(),
-              CustomCard(
+              LeaderboardCard(
+                onTap: () {
+                  handleTap(context, const LeaderboardPage());
+                },
+              ),
+              const CustomCard(
                 child: Column(
                   children: [
                     SizedBox(height: 20),
