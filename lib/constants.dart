@@ -16,6 +16,7 @@ class Constants {
   static const url = 'http://192.168.18.10:3000/';
   static const register = '${url}register';
   static const login = '${url}login';
+  static const leaderboard = '${url}leaderboard';
 
   //Onboarding texts
   static var titleOne = "Learn more about plants";
