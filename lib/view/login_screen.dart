@@ -3,6 +3,7 @@ import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/widget/auth_textfield.dart';
 import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/view/user_screen.dart';
+import 'package:urecycle_app/view/admin_screen.dart';
 import 'package:urecycle_app/view/register_screen.dart';
 
 import '../utils/navigation_utils.dart';
@@ -25,15 +26,23 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       try {
         // Perform the login operation
-        await _authService.loginUser(
+        final responseData = await _authService.loginUser(
           studentNumber: studentIDController.text,
           password: passwordController.text,
         );
 
+        final user = responseData['user'];
+        final String role = user['role'];
+
         // Check if the widget is still mounted before navigating
         if (!mounted) return;
 
-        handleTap(context, const UserScreen());
+        // Navigate based on role or handle accordingly
+        if (role == 'admin') {
+          handleTap(context, const AdminScreen()); // Replace with actual admin screen
+        } else {
+          handleTap(context, const UserScreen()); // Replace with actual user screen
+        }
 
       } catch (e) {
         // Check if the widget is still mounted before showing the Snackbar
@@ -75,7 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: studentIDController,
                       hintText: "Student ID",
                       icon: Icons.person,
-                      keyboardType: TextInputType.number,
                       textInputAction: TextInputAction.next,
                       validator: (value) {
                         if (value!.isEmpty) {
