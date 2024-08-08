@@ -1,0 +1,106 @@
+import 'package:flutter/material.dart';
+import 'package:urecycle_app/constants.dart';
+import 'package:urecycle_app/view/page/dashboard_page.dart';
+import 'package:urecycle_app/view/page/profile_page.dart';
+
+class AdminScreen extends StatefulWidget {
+  const AdminScreen({super.key});
+
+  @override
+  State createState() => _UserScreen();
+}
+
+class _UserScreen extends State<AdminScreen> {
+  final PageController _pageController = PageController(initialPage: 0);
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Admin Dashboard',
+            style: TextStyle(color: Colors.white)),
+        automaticallyImplyLeading: false,
+        backgroundColor: Constants.primaryColor,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            color: Colors.white,
+            onPressed: () {
+              // Handle settings action
+            },
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: PageView(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _selectedIndex = index;
+            });
+          },
+          children: const <Widget>[
+            Center(child: Dashboard()),
+            Center(child: Scan()),
+            Center(child: Profile()),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _selectedIndex = 1;
+            _pageController.jumpToPage(1);
+          });
+        },
+        backgroundColor: Constants.primary02Color,
+        foregroundColor:
+            _selectedIndex == 1 ? Colors.white : Constants.gray04Color,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.document_scanner_outlined),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        color: Constants.primaryColor,
+        notchMargin: 10.0,
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: <Widget>[
+            IconButton(
+              icon: const Icon(Icons.dashboard),
+              color: _selectedIndex == 0 ? Colors.white : Constants.gray04Color,
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 0;
+                  _pageController.jumpToPage(0);
+                });
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.account_circle_outlined),
+              color: _selectedIndex == 2 ? Colors.white : Constants.gray04Color,
+              onPressed: () {
+                setState(() {
+                  _selectedIndex = 2;
+                  _pageController.jumpToPage(2);
+                });
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class Scan extends StatelessWidget {
+  const Scan({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text('Scan');
+  }
+}
