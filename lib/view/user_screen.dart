@@ -53,10 +53,10 @@ class _UserScreen extends State<UserScreen> {
             pageController.jumpToPage(2);
           });
         },
-        backgroundColor: Constants.secondaryColor,
+        backgroundColor: Constants.primary02Color,
         foregroundColor: _selectedIndex == 2
-            ? Colors.black // Highlighted color
-            : Colors.white, // Default color
+            ? Colors.white
+            : Constants.gray04Color, // Default color
         shape: const CircleBorder(),
         child: const Icon(Icons.document_scanner_outlined),
       ),
