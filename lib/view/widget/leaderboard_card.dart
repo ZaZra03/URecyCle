@@ -1,16 +1,60 @@
 import 'package:flutter/material.dart';
+import '../../utils/userdata_utils.dart';
+import 'package:urecycle_app/model/user_model.dart';
+import 'package:urecycle_app/constants.dart';
 import 'custom_card.dart';
 import 'leaderboard_position.dart';
 
-class LeaderboardCard extends StatelessWidget {
+class LeaderboardCard extends StatefulWidget {
   final VoidCallback? onTap;
 
   const LeaderboardCard({super.key, this.onTap});
 
   @override
+  State createState() => _LeaderboardCardState();
+}
+
+class _LeaderboardCardState extends State<LeaderboardCard> {
+  UserModel? _user;
+  bool _isLoading = true;
+  final Uri url = Uri.parse(Constants.user); // Replace with actual user data endpoint
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = await fetchUserData(url);
+      setState(() {
+        _user = user;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading user data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return CustomCard(
+        onTap: widget.onTap,
+        child: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final initials = _user != null
+        ? '${_user!.firstName[0].toUpperCase()}${_user!.lastName[0].toUpperCase()}'
+        : '';
+
     return CustomCard(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -56,15 +100,19 @@ class LeaderboardCard extends StatelessWidget {
               ),
             ],
           ),
-          const UserCard(),
+          UserCard(user: _user, initials: initials),
         ],
       ),
     );
   }
 }
 
+
 class UserCard extends StatelessWidget {
-  const UserCard({super.key});
+  final UserModel? user;
+  final String initials;
+
+  const UserCard({super.key, this.user, required this.initials});
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +127,7 @@ class UserCard extends StatelessWidget {
           backgroundColor: Colors.grey,
           radius: avatarRadius,
           child: Text(
-            "EM",
+            initials,
             style: TextStyle(
               color: Colors.white,
               fontSize: MediaQuery.of(context).size.width * 0.03,
@@ -87,7 +135,7 @@ class UserCard extends StatelessWidget {
           ),
         ),
         title: Text(
-          'Ezra Micah (me)',
+          user?.firstName ?? 'Loading...',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -98,7 +146,7 @@ class UserCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Philippines',
+              'Philippines', // This could be user.country if you have a country field
               style: TextStyle(
                 color: Colors.white,
                 fontSize: MediaQuery.of(context).size.width * 0.03,
