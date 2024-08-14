@@ -19,102 +19,35 @@ class AuthService {
     await prefs.remove('auth_token');
   }
 
-  Future<Map<String, dynamic>> registerUser({
-    required String firstName,
-    required String lastName,
-    required String studentNumber,
-    required String email,
-    required String password,
-  }) async {
-    final Uri url = Uri.parse(Constants.register);
+  Future<void> logout() async {
+    // Optionally, notify backend about the logout if your backend supports this
+    final Uri logoutUrl = Uri.parse(Constants.logoutUrl); // Define this in your constants
+    final token = await getToken();
 
-    // print('Register URL: $url');
-    // print('Register Payload: ${jsonEncode({
-    //   'firstName': firstName,
-    //   'lastName': lastName,
-    //   'studentNumber': studentNumber,
-    //   'email': email,
-    //   'password': password,
-    // })}');
+    if (token != null) {
+      try {
+        final response = await http.post(
+          logoutUrl,
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $token',
+          },
+        );
 
-    try {
-      final response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode({
-          'firstName': firstName,
-          'lastName': lastName,
-          'studentNumber': studentNumber,
-          'email': email,
-          'password': password,
-        }),
-      );
-
-      // print('Register Response Status Code: ${response.statusCode}');
-      // print('Register Response Body: ${response.body}');
-
-      if (response.statusCode == 201) {
-        final responseData = jsonDecode(response.body);
-        // Optionally, store the token here if available in the response
-        final String? token = responseData['token'];
-        if (token != null) {
-          await storeToken(token);
+        if (response.statusCode == 200) {
+          // Successful response from backend
+          await deleteToken();
+        } else {
+          // Handle server error or invalid response
+          print('Failed to logout. Server response: ${response.statusCode}');
+          await deleteToken(); // Still clear token if server is unreachable
         }
-        return responseData;
-      } else {
-        final Map<String, dynamic> errorResponse = jsonDecode(response.body);
-        final String errorMessage = errorResponse['error'] ?? 'Failed to register';
-        throw Exception(errorMessage);
+      } catch (e) {
+        print('Error during logout: $e');
+        await deleteToken(); // Clear token in case of any error
       }
-    } catch (e) {
-      throw Exception('Failed to register: $e');
-    }
-  }
-
-  Future<Map<String, dynamic>> loginUser({
-    required String studentNumber,
-    required String password,
-  }) async {
-    final Uri url = Uri.parse(Constants.login);
-
-    // print('Login URL: $url');
-    // print('Login Payload: ${jsonEncode({
-    //   'studentNumber': studentNumber,
-    //   'password': password,
-    // })}');
-
-    try {
-      final response = await http.post(
-        url,
-        headers: <String, String>{
-          'Content-Type': 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode({
-          'studentNumber': studentNumber,
-          'password': password,
-        }),
-      );
-
-      print('Login Response Status Code: ${response.statusCode}');
-      print('Login Response Body: ${response.body}');
-
-      if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        // Store the token received from the response
-        final String? token = responseData['token'];
-        if (token != null) {
-          await storeToken(token);
-        }
-        return responseData;
-      } else {
-        final Map<String, dynamic> errorResponse = jsonDecode(response.body);
-        final String errorMessage = errorResponse['message'] ?? 'Failed to login';
-        throw Exception(errorMessage);
-      }
-    } catch (e) {
-      throw Exception('Failed to login: $e');
+    } else {
+      await deleteToken(); // Clear token if no token is found
     }
   }
 }

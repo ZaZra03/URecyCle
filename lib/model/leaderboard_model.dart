@@ -1,19 +1,22 @@
 class LeaderboardEntry {
   final String name;
-  final String department;
+  final String studentNumber;
+  final String college;
   final int points;
 
   LeaderboardEntry({
     required this.name,
-    required this.department,
+    required this.studentNumber,
+    required this.college,
     required this.points,
   });
 
   factory LeaderboardEntry.fromJson(Map<String, dynamic> json) {
     return LeaderboardEntry(
       name: json['name'],
-      department: json['department'],
-      points: json['points'],
+      studentNumber: json['studentNumber'],
+      college: json['college'],
+      points: json['points'] is int ? json['points'] : int.tryParse(json['points']) ?? 0,
     );
   }
 }

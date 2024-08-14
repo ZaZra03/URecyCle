@@ -87,7 +87,7 @@ class _ProfileState extends State<Profile> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _user?.firstName ?? 'Loading...',
+                    '${_user?.firstName ?? 'Loading...'} ${_user?.lastName ?? ''}',
                     style: TextStyle(
                       color: Constants.blackColor,
                       fontSize: 20,

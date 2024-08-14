@@ -16,9 +16,34 @@ class _UserScreen extends State<UserScreen> {
   final PageController pageController = PageController(initialPage: 0);
   int _selectedIndex = 0;
 
+  final Map<int, String> _pageTitles = {
+    0: 'Home',
+    1: 'History',
+    2: 'Scan',
+    3: 'Notifications',
+    4: 'Profile',
+  };
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text(
+          _pageTitles[_selectedIndex] ?? 'App Title', // Default title if index not found
+          style: const TextStyle(color: Colors.white),
+        ),
+        automaticallyImplyLeading: false,
+        backgroundColor: Constants.primaryColor,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.more_vert),
+            color: Colors.white,
+            onPressed: () {
+              // Handle settings action
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: PageView(
           controller: pageController,
@@ -28,21 +53,11 @@ class _UserScreen extends State<UserScreen> {
             });
           },
           children: const <Widget>[
-            Center(
-              child: Home(),
-            ),
-            Center(
-              child: History(),
-            ),
-            Center(
-              child: Scan(),
-            ),
-            Center(
-              child: Notifications(),
-            ),
-            Center(
-              child: Profile(),
-            ),
+            Home(),
+            History(),
+            Scan(),
+            Notifications(),
+            Profile(),
           ],
         ),
       ),

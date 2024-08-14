@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../constants.dart';
-
 class LeaderboardPosition extends StatelessWidget {
   final int position;
   final String name;
@@ -57,7 +55,7 @@ class LeaderboardPosition extends StatelessWidget {
           style: TextStyle(
             fontSize: ((screenWidth * 0.04 + screenHeight * 0.02) / 2)
                 .clamp(0.0, maxFontSize),
-            color: Colors.black,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
           ),
           textAlign: TextAlign.center,
@@ -67,7 +65,7 @@ class LeaderboardPosition extends StatelessWidget {
           style: TextStyle(
             fontSize: ((screenWidth * 0.04 + screenHeight * 0.02) / 2)
                 .clamp(0.0, maxFontSize),
-            color: Constants.gray04Color,
+            color: Colors.white,
           ),
           textAlign: TextAlign.center,
         ),

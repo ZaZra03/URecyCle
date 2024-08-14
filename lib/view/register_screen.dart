@@ -10,18 +10,19 @@ class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
 
   @override
-  State createState() => _RegistrationScreenState();
+  State<RegistrationScreen> createState() => _RegistrationScreenState();
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
   String? errorMessage;
   final _formKey = GlobalKey<FormState>();
   final firstNameEditingController = TextEditingController();
-  final secondNameEditingController = TextEditingController();
+  final lastNameEditingController = TextEditingController();
   final studentIDEditingController = TextEditingController();
   final emailEditingController = TextEditingController();
   final passwordEditingController = TextEditingController();
   final confirmPasswordEditingController = TextEditingController();
+  String? selectedCollege = '';
 
   final AuthService _authService = AuthService();
 
@@ -30,8 +31,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       try {
         final response = await _authService.registerUser(
           firstName: firstNameEditingController.text,
-          lastName: secondNameEditingController.text,
+          lastName: lastNameEditingController.text,
           studentNumber: studentIDEditingController.text,
+          college: selectedCollege ?? '',
           email: emailEditingController.text,
           password: passwordEditingController.text,
         );
@@ -57,6 +59,18 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Map<String, String> collegeMap = {
+      '': '',
+      'College of Arts and Sciences': 'CAS',
+      'College of Business Accountancy and Administration': 'CBAA',
+      'College of Computing Studies': 'CCS',
+      'College of Education': 'COED',
+      'College of Engineering': 'COE',
+      'College of Health and Allied Sciences': 'CHAS',
+    };
+
+    final double imageHeight = MediaQuery.of(context).size.width * 0.4; // Adjust the multiplier as needed
+
     return Scaffold(
       backgroundColor: Constants.primaryColor,
       appBar: AppBar(
@@ -81,7 +95,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: <Widget>[
                   SizedBox(
-                    height: 170,
+                    height: imageHeight, // Responsive image height
                     child: Image.asset(
                       "assets/icon/logo.png",
                       fit: BoxFit.contain,
@@ -98,12 +112,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                           icon: Icons.account_circle,
                           textInputAction: TextInputAction.next,
                           validator: (value) {
-                            RegExp regex = RegExp(r'^.{3,}$');
-                            if (value!.isEmpty) {
-                              return ("First Name cannot be Empty");
-                            }
-                            if (!regex.hasMatch(value)) {
-                              return ("Enter Valid name (Min. 3 Characters)");
+                            if (value == null || value.isEmpty) {
+                              return "*Required";
                             }
                             return null;
                           },
@@ -112,13 +122,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       const SizedBox(width: 20),
                       Expanded(
                         child: AuthTextField(
-                          controller: secondNameEditingController,
+                          controller: lastNameEditingController, // Updated variable name here
                           hintText: "Last name",
                           icon: Icons.account_circle,
                           textInputAction: TextInputAction.next,
                           validator: (value) {
-                            if (value!.isEmpty) {
-                              return ("Last Name cannot be Empty");
+                            if (value == null || value.isEmpty) {
+                              return "*Required";
                             }
                             return null;
                           },
@@ -134,8 +144,38 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     keyboardType: TextInputType.number,
                     textInputAction: TextInputAction.next,
                     validator: (value) {
-                      if (value!.isEmpty) {
-                        return ("Student ID cannot be Empty");
+                      if (value == null || value.isEmpty) {
+                        return "*Required";
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<String>(
+                    value: selectedCollege,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderSide: const BorderSide(color: Colors.black, width: 2), // Border style
+                        borderRadius: BorderRadius.circular(8), // Rounded corners
+                      ),
+                    ),
+                    isExpanded: true,
+                    items: collegeMap.keys.map((String college) {
+                      return DropdownMenuItem<String>(
+                        value: collegeMap[college], // Use the internal value here
+                        child: Text(college),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        selectedCollege = newValue;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty || value == '') {
+                        return 'Please select a college';
                       }
                       return null;
                     },
@@ -148,11 +188,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     validator: (value) {
-                      if (value!.isEmpty) {
-                        return ("Please Enter Your Email");
+                      if (value == null || value.isEmpty) {
+                        return "*Required";
                       }
-                      if (!RegExp("^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+.[a-z]").hasMatch(value)) {
-                        return ("Please Enter a valid email");
+                      if (!RegExp(r"^[a-zA-Z0-9+_.-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(value)) {
+                        return "Invalid email";
                       }
                       return null;
                     },
@@ -166,11 +206,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     textInputAction: TextInputAction.next,
                     validator: (value) {
                       RegExp regex = RegExp(r'^.{6,}$');
-                      if (value!.isEmpty) {
-                        return ("Password is required for login");
+                      if (value == null || value.isEmpty) {
+                        return "*Required";
                       }
                       if (!regex.hasMatch(value)) {
-                        return ("Enter Valid Password (Min. 6 Characters)");
+                        return "Must be minimum of 6 characters";
                       }
                       return null;
                     },
@@ -183,7 +223,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                     obscureText: true,
                     textInputAction: TextInputAction.done,
                     validator: (value) {
-                      if (confirmPasswordEditingController.text != passwordEditingController.text) {
+                      if (value != passwordEditingController.text) {
                         return "Passwords don't match";
                       }
                       return null;
