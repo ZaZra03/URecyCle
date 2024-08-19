@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:urecycle_app/view/widget/profile_widget.dart';
 import 'package:urecycle_app/model/user_model.dart';
 import 'package:urecycle_app/constants.dart';
+import '../../services/auth_service.dart';
 import '../../utils/userdata_utils.dart';
+import '../login_screen.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -37,6 +39,14 @@ class _ProfileState extends State<Profile> {
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _logout() async {
+    await AuthService().logout();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
+    ); // Adjust the route as per your app's routing
   }
 
   @override
@@ -106,16 +116,20 @@ class _ProfileState extends State<Profile> {
                 child: SizedBox(
                   height: size.height * .7,
                   width: size.width,
-                  child: const Column(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       ProfileWidget(
                         icon: Icons.settings,
                         title: 'Account Settings',
+                        onTap: () {
+                          // Handle account settings tap
+                        },
                       ),
                       ProfileWidget(
                         icon: Icons.logout,
                         title: 'Log Out',
+                        onTap: _logout,
                       ),
                     ],
                   ),

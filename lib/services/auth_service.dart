@@ -19,35 +19,125 @@ class AuthService {
     await prefs.remove('auth_token');
   }
 
-  Future<void> logout() async {
-    // Optionally, notify backend about the logout if your backend supports this
-    final Uri logoutUrl = Uri.parse(Constants.logoutUrl); // Define this in your constants
-    final token = await getToken();
+  Future<Map<String, dynamic>> registerUser({
+    required String firstName,
+    required String lastName,
+    required String studentNumber,
+    required String college,
+    required String email,
+    required String password,
+  }) async {
+    final Uri url = Uri.parse(Constants.register);
 
-    if (token != null) {
-      try {
-        final response = await http.post(
-          logoutUrl,
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': 'Bearer $token',
-          },
-        );
+    // print('Register URL: $url');
+    // print('Register Payload: ${jsonEncode({
+    //   'firstName': firstName,
+    //   'lastName': lastName,
+    //   'studentNumber': studentNumber,
+    //   'email': email,
+    //   'password': password,
+    // })}');
 
-        if (response.statusCode == 200) {
-          // Successful response from backend
-          await deleteToken();
-        } else {
-          // Handle server error or invalid response
-          print('Failed to logout. Server response: ${response.statusCode}');
-          await deleteToken(); // Still clear token if server is unreachable
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'firstName': firstName,
+          'lastName': lastName,
+          'studentNumber': studentNumber,
+          'college': college,
+          'email': email,
+          'password': password,
+        }),
+      );
+
+      // print('Register Response Status Code: ${response.statusCode}');
+      // print('Register Response Body: ${response.body}');
+
+      if (response.statusCode == 201) {
+        final responseData = jsonDecode(response.body);
+        // Optionally, store the token here if available in the response
+        final String? token = responseData['token'];
+        if (token != null) {
+          await storeToken(token);
         }
-      } catch (e) {
-        print('Error during logout: $e');
-        await deleteToken(); // Clear token in case of any error
+        return responseData;
+      } else {
+        final Map<String, dynamic> errorResponse = jsonDecode(response.body);
+        final String errorMessage = errorResponse['error'] ?? 'Failed to register';
+        throw Exception(errorMessage);
       }
-    } else {
-      await deleteToken(); // Clear token if no token is found
+    } catch (e) {
+      throw Exception('Failed to register: $e');
     }
   }
+
+  Future<Map<String, dynamic>> loginUser({
+    required String studentNumber,
+    required String password,
+  }) async {
+    final Uri url = Uri.parse(Constants.login);
+
+    // print('Login URL: $url');
+    // print('Login Payload: ${jsonEncode({
+    //   'studentNumber': studentNumber,
+    //   'password': password,
+    // })}');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode({
+          'studentNumber': studentNumber,
+          'password': password,
+        }),
+      );
+
+      print('Login Response Status Code: ${response.statusCode}');
+      print('Login Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final responseData = jsonDecode(response.body);
+        // Store the token received from the response
+        final String? token = responseData['token'];
+        if (token != null) {
+          await storeToken(token);
+        }
+        return responseData;
+      } else {
+        final Map<String, dynamic> errorResponse = jsonDecode(response.body);
+        final String errorMessage = errorResponse['message'] ?? 'Failed to login';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      throw Exception('Failed to login: $e');
+    }
+  }
+
+  Future<void> logout() async {
+    // Debug: Print token before deletion
+    final String? tokenBefore = await getToken();
+    print('Token before deletion: $tokenBefore');
+
+    // Perform token deletion
+    await deleteToken();
+
+    // Debug: Print token after deletion
+    final String? tokenAfter = await getToken();
+    print('Token after deletion: $tokenAfter');
+
+    // Optionally, you can check if the token is null after deletion
+    if (tokenAfter == null) {
+      print('Token successfully deleted.');
+    } else {
+      print('Token deletion failed.');
+    }
+  }
+
 }

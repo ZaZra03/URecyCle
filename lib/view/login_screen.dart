@@ -25,7 +25,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // Perform the login operation
         final responseData = await _authService.loginUser(
           studentNumber: studentIDController.text,
           password: passwordController.text,
@@ -34,27 +33,31 @@ class _LoginScreenState extends State<LoginScreen> {
         final user = responseData['user'];
         final String role = user['role'];
 
-        // Check if the widget is still mounted before navigating
         if (!mounted) return;
 
         // Navigate based on role or handle accordingly
         if (role == 'admin') {
-          handleTap(context, const AdminScreen()); // Replace with actual admin screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const AdminScreen()),
+          );
         } else {
-          handleTap(context, const UserScreen()); // Replace with actual user screen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const UserScreen()),
+          );
         }
 
       } catch (e) {
-        // Check if the widget is still mounted before showing the Snackbar
         if (!mounted) return;
 
-        // Show an error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),
         );
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

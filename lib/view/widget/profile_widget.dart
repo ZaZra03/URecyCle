@@ -4,18 +4,19 @@ import 'package:urecycle_app/constants.dart';
 class ProfileWidget extends StatelessWidget {
   final IconData icon;
   final String title;
+  final VoidCallback? onTap; // Add this line
+
   const ProfileWidget({
     super.key,
     required this.icon,
     required this.title,
+    this.onTap, // Add this line
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () {
-        // Add your onTap functionality here
-      },
+      onTap: onTap, // Update this line
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 18),
         child: Row(
