@@ -7,19 +7,28 @@ class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
 
   @override
-  State createState() => _UserScreen();
+  State<AdminScreen> createState() => _AdminScreenState();
 }
 
-class _UserScreen extends State<AdminScreen> {
+class _AdminScreenState extends State<AdminScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _selectedIndex = 0;
+
+  // Define a map for page titles
+  final Map<int, String> _pageTitles = {
+    0: 'Dashboard',
+    1: 'Scan',
+    2: 'Profile',
+  };
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin Dashboard',
-            style: TextStyle(color: Colors.white)),
+        title: Text(
+          _pageTitles[_selectedIndex] ?? 'App Title', // Default title if index not found
+          style: const TextStyle(color: Colors.white),
+        ),
         automaticallyImplyLeading: false,
         backgroundColor: Constants.primaryColor,
         actions: <Widget>[
@@ -40,10 +49,10 @@ class _UserScreen extends State<AdminScreen> {
               _selectedIndex = index;
             });
           },
-          children: const <Widget>[
-            Center(child: Dashboard()),
-            Center(child: Scan()),
-            Center(child: Profile()),
+          children: <Widget>[
+            const Dashboard(), // Ensure Dashboard is a StatefulWidget
+            const Scan(), // Scan is StatelessWidget
+            const Profile(), // Ensure Profile is a StatelessWidget
           ],
         ),
       ),
@@ -55,8 +64,7 @@ class _UserScreen extends State<AdminScreen> {
           });
         },
         backgroundColor: Constants.primary02Color,
-        foregroundColor:
-            _selectedIndex == 1 ? Colors.white : Constants.gray04Color,
+        foregroundColor: _selectedIndex == 1 ? Colors.white : Constants.gray04Color,
         shape: const CircleBorder(),
         child: const Icon(Icons.document_scanner_outlined),
       ),
