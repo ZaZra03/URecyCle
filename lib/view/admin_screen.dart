@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/page/dashboard_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
+import 'package:urecycle_app/view/page/scan_page.dart';
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -24,6 +25,7 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: Text(
           _pageTitles[_selectedIndex] ?? 'App Title', // Default title if index not found
@@ -31,30 +33,28 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
         automaticallyImplyLeading: false,
         backgroundColor: Constants.primaryColor,
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            color: Colors.white,
-            onPressed: () {
-              // Handle settings action
-            },
-          ),
-        ],
+        // actions: <Widget>[
+        //   IconButton(
+        //     icon: const Icon(Icons.more_vert),
+        //     color: Colors.white,
+        //     onPressed: () {
+        //       // Handle settings action
+        //     },
+        //   ),
+        // ],
       ),
-      body: SafeArea(
-        child: PageView(
-          controller: _pageController,
-          onPageChanged: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          children: <Widget>[
-            const Dashboard(), // Ensure Dashboard is a StatefulWidget
-            const Scan(), // Scan is StatelessWidget
-            const Profile(), // Ensure Profile is a StatelessWidget
-          ],
-        ),
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        children: const <Widget>[
+          Dashboard(), // Ensure Dashboard is a StatefulWidget
+          Scan(), // Scan is StatelessWidget
+          Profile(), // Ensure Profile is a StatelessWidget
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -101,14 +101,5 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
       ),
     );
-  }
-}
-
-class Scan extends StatelessWidget {
-  const Scan({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text('Scan');
   }
 }

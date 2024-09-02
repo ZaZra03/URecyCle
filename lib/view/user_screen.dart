@@ -4,6 +4,7 @@ import 'package:urecycle_app/view/page/home_page.dart';
 import 'package:urecycle_app/view/page/history_page.dart';
 import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
+import 'package:urecycle_app/view/page/scan_page.dart';
 
 class UserScreen extends StatefulWidget {
   const UserScreen({super.key});
@@ -27,6 +28,7 @@ class _UserScreen extends State<UserScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: Text(
           _pageTitles[_selectedIndex] ?? 'App Title', // Default title if index not found
@@ -34,32 +36,30 @@ class _UserScreen extends State<UserScreen> {
         ),
         automaticallyImplyLeading: false,
         backgroundColor: Constants.primaryColor,
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.more_vert),
-            color: Colors.white,
-            onPressed: () {
-              // Handle settings action
-            },
-          ),
-        ],
+        // actions: <Widget>[
+        //   IconButton(
+        //     icon: const Icon(Icons.more_vert),
+        //     color: Colors.white,
+        //     onPressed: () {
+        //       // Handle settings action
+        //     },
+        //   ),
+        // ],
       ),
-      body: SafeArea(
-        child: PageView(
-          controller: pageController,
-          onPageChanged: (index) {
-            setState(() {
-              _selectedIndex = index;
-            });
-          },
-          children: const <Widget>[
-            Home(),
-            History(),
-            Scan(),
-            Notifications(),
-            Profile(),
-          ],
-        ),
+      body: PageView(
+        controller: pageController,
+        onPageChanged: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
+        children: const <Widget>[
+          Home(),
+          History(),
+          Scan(),
+          Notifications(),
+          Profile(),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -129,14 +129,5 @@ class _UserScreen extends State<UserScreen> {
         ),
       ),
     );
-  }
-}
-
-class Scan extends StatelessWidget {
-  const Scan({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Text('Scan');
   }
 }

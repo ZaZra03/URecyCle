@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widget/custom_card.dart';
+import 'package:urecycle_app/view/register_screen.dart';
+import '../leaderboard_screen.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -76,7 +78,12 @@ class _DashboardState extends State<Dashboard> {
           ),
           CustomCard(
             onTap: () {
-              // Handle tap for Create Users card
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RegistrationScreen(),
+                ),
+              );
             },
             backgroundColor: Colors.white, // Default color
             child: const Column(
@@ -90,7 +97,12 @@ class _DashboardState extends State<Dashboard> {
           ),
           CustomCard(
             onTap: () {
-              // Handle tap for Leaderboards card
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const LeaderboardPage(),
+                ),
+              );
             },
             backgroundColor: Colors.white, // Default color
             child: const Column(
