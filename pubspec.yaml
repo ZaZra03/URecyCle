@@ -37,5 +37,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/icon/logo.png
+    - assets/images/SGD_12.png
+    - assets/images/MNV.jpg
     - assets/model.tflite
     - assets/model.txt
