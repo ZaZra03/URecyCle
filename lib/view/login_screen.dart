@@ -5,7 +5,6 @@ import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/view/user_screen.dart';
 import 'package:urecycle_app/view/admin_screen.dart';
 // import 'package:urecycle_app/view/register_screen.dart';
-
 // import '../utils/navigation_utils.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -58,9 +57,10 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       backgroundColor: Constants.primaryColor,
       body: Center(
@@ -75,14 +75,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
-                    SizedBox(
-                      height: 200,
+                    AspectRatio(
+                      aspectRatio: 1.4, // Maintain the aspect ratio of the image
                       child: Image.asset(
                         "assets/icon/logo.png",
                         fit: BoxFit.contain,
                       ),
                     ),
-                    const SizedBox(height: 45),
+                    const SizedBox(height: 30),
                     AuthTextField(
                       controller: studentIDController,
                       hintText: "Student ID",
@@ -108,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           return "Password is required for login";
                         }
                         if (!regex.hasMatch(value)) {
-                          return "Enter Valid Password(Min. 6 Character)";
+                          return "Enter Valid Password (Min. 6 Characters)";
                         }
                         return null;
                       },
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         onTap: _login,
                         child: Container(
                           padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-                          width: MediaQuery.of(context).size.width,
+                          width: screenWidth * 0.8, // Responsive width
                           alignment: Alignment.center,
                           child: const Text(
                             "Login",
@@ -175,4 +175,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-
