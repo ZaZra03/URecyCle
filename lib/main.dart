@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'view/login_screen.dart';
+import 'view/user_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +22,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const LoginScreen(),
+      home: const UserScreen(),
     );
   }
 }

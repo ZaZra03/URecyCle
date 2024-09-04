@@ -73,7 +73,7 @@ class _UserScreen extends State<UserScreen> {
             ? Colors.white
             : Constants.gray04Color, // Default color
         shape: const CircleBorder(),
-        child: const Icon(Icons.document_scanner_outlined),
+        child: const Icon(Icons.qr_code),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
