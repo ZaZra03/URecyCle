@@ -9,39 +9,50 @@ class Home extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            LeaderboardCard(
-              onTap: () => handleTap(context, const LeaderboardPage()),
-            ),
-            _buildInfoCard(
-              title: 'Total Disposed Recycled Waste',
-              value: '0',
-              buttonText: 'Recycle',
-              onButtonPressed: () {
-                // Add your action here
-              },
-            ),
-            _buildImageCard(
-              imagePath: 'assets/images/SGD_12.png',
-              title: 'Sustainable Development Goal 12',
-              subtitle: 'Learn more about how SDG 12 fosters sustainable practices.',
-              onButtonPressed: () {
-                // Add your action here
-              },
-            ),
-            _buildImageCard(
-              imagePath: 'assets/images/MNV.jpg',
-              title: 'Mission and Vision',
-              subtitle: 'Discover the University Mission and Vision.',
-              onButtonPressed: () {
-                // Add your action here
-              },
-            ),
-            const SizedBox(height: 110), // Adjust spacing if needed
-          ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          // Trigger data reload in the LeaderboardCard only on pull-to-refresh
+          LeaderboardCardState? cardState = LeaderboardCardState.instance;
+          if (cardState != null) {
+            await cardState.reloadData();
+          }
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            children: [
+              LeaderboardCard(
+                onTap: () => handleTap(context, const LeaderboardPage()),
+              ),
+              _buildInfoCard(
+                title: 'Total Disposed Recycled Waste',
+                value: '0',
+                buttonText: 'Recycle',
+                onButtonPressed: () {
+                  // Add your action here
+                },
+              ),
+              _buildImageCard(
+                imagePath: 'assets/images/SGD_12.png',
+                title: 'Sustainable Development Goal 12',
+                subtitle:
+                    'Learn more about how this app supports the SDG 12 sustainable practices.',
+                onButtonPressed: () {
+                  // Add your action here
+                },
+              ),
+              _buildImageCard(
+                imagePath: 'assets/images/MNV.jpg',
+                title: 'Mission and Vision',
+                subtitle: 'Discover the University Mission and Vision.',
+                onButtonPressed: () {
+                  // Add your action here
+                },
+              ),
+              const SizedBox(height: 110), // Adjust spacing if needed
+            ],
+          ),
         ),
       ),
     );

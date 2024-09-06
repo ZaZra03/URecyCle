@@ -13,43 +13,62 @@ class LeaderboardCard extends StatefulWidget {
   const LeaderboardCard({super.key, this.onTap});
 
   @override
-  State createState() => _LeaderboardCardState();
+  State createState() => LeaderboardCardState();
 }
 
-class _LeaderboardCardState extends State<LeaderboardCard> {
+class LeaderboardCardState extends State<LeaderboardCard> {
+  static LeaderboardCardState? instance; // Singleton pattern for accessing reloadData
   LeaderboardEntry? _lbUser;
   UserModel? _user;
   bool _isLoading = true;
-  final Uri _url = Uri.parse(Constants.user); // Replace with actual user data endpoint
+  bool _isFirstLoad = true;  // To track if it's the first load
+  List<Map<String, dynamic>>? _cachedEntries; // Cache the leaderboard entries
+  final Uri _url = Uri.parse(Constants.user);
 
   final LeaderboardService _lbService = LeaderboardService();
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    instance = this; // Assign this instance to the static variable
+    _loadUserData();  // Load data for the first time
   }
 
   Future<void> _loadUserData() async {
+    if (_cachedEntries != null && !_isFirstLoad) {
+      // If cached data exists and it's not the first load, avoid making a request
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
     try {
       final user = await fetchUserData(_url);
       final lbUser = await _lbService.getEntryByStudentNumber(user?.studentNumber ?? '');
-
-      // Debugging: Print out the user and lbUser details
-      print('Fetched User: $user');
-      print('Fetched lbUser: $lbUser');
+      final top3Entries = await _lbService.fetchTop3Entries();
 
       setState(() {
         _user = user;
         _lbUser = lbUser;
+        _cachedEntries = top3Entries; // Cache the data
         _isLoading = false;
+        _isFirstLoad = false;  // Set first load to false after loading data
       });
     } catch (e) {
-      print('Error loading user data: $e');
       setState(() {
         _isLoading = false;
       });
     }
+  }
+
+  // Method to reload data (used for pull-to-refresh)
+  Future<void> reloadData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    _cachedEntries = null; // Clear cache
+    await _loadUserData();  // Trigger data reload
   }
 
   String _sliceName(String name) {
@@ -90,71 +109,61 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
               color: Colors.grey,
             ),
           ),
-          FutureBuilder<List<Map<String, dynamic>>>(
-            future: _lbService.fetchTop3Entries(),
-            builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No leaderboard entries found.'));
-              } else {
-                final entries = snapshot.data!;
-
-                // Ensure you have at least 3 entries to avoid index errors
-                final topEntries = List.generate(
-                  3,
-                      (index) => entries.length > index ? entries[index] : null,
-                  growable: false,
-                );
-
-                return Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: [
-                          if (topEntries[1] != null)
-                            LeaderboardPosition(
-                              position: 2,
-                              name: _sliceName(topEntries[1]!['name']),
-                              points: '${topEntries[1]!['points']} PTS',
-                              color: Colors.orange,
-                              isFirst: false,
-                            ),
-                          if (topEntries[0] != null)
-                            LeaderboardPosition(
-                              position: 1,
-                              name: _sliceName(topEntries[0]!['name']),
-                              points: '${topEntries[0]!['points']} PTS',
-                              color: Colors.red,
-                              isFirst: true,
-                            ),
-                          if (topEntries[2] != null)
-                            LeaderboardPosition(
-                              position: 3,
-                              name: _sliceName(topEntries[2]!['name']),
-                              points: '${topEntries[2]!['points']} PTS',
-                              color: Colors.purpleAccent,
-                              isFirst: false,
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                );
-              }
-            },
-          ),
+          _cachedEntries != null ? _buildLeaderboardContent() : const CircularProgressIndicator(),
           UserCard(user: _user, lbUser: _lbUser, initials: initials),
         ],
       ),
     );
   }
+
+  Widget _buildLeaderboardContent() {
+    // Use _cachedEntries to build the leaderboard UI
+    final topEntries = List.generate(
+      3,
+          (index) => _cachedEntries!.length > index ? _cachedEntries![index] : null,
+      growable: false,
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 20.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              if (topEntries[1] != null)
+                LeaderboardPosition(
+                  position: 2,
+                  name: _sliceName(topEntries[1]!['name']),
+                  points: '${topEntries[1]!['points']} PTS',
+                  color: Colors.orange,
+                  isFirst: false,
+                ),
+              if (topEntries[0] != null)
+                LeaderboardPosition(
+                  position: 1,
+                  name: _sliceName(topEntries[0]!['name']),
+                  points: '${topEntries[0]!['points']} PTS',
+                  color: Colors.red,
+                  isFirst: true,
+                ),
+              if (topEntries[2] != null)
+                LeaderboardPosition(
+                  position: 3,
+                  name: _sliceName(topEntries[2]!['name']),
+                  points: '${topEntries[2]!['points']} PTS',
+                  color: Colors.purpleAccent,
+                  isFirst: false,
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
+
 
 class UserCard extends StatelessWidget {
   final UserModel? user;
