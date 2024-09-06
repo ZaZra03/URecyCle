@@ -5,17 +5,20 @@ import 'package:urecycle_app/view/page/history_page.dart';
 import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
 import 'package:urecycle_app/view/page/scan_page.dart';
+import 'package:urecycle_app/view/page/qr_page.dart';
 
 class UserScreen extends StatefulWidget {
-  const UserScreen({super.key});
+  final int initialPageIndex;
+
+  const UserScreen({super.key, this.initialPageIndex = 0});
 
   @override
   State createState() => _UserScreen();
 }
 
 class _UserScreen extends State<UserScreen> {
-  final PageController pageController = PageController(initialPage: 0);
-  int _selectedIndex = 0;
+  late PageController pageController;
+  late int _selectedIndex;
 
   final Map<int, String> _pageTitles = {
     0: 'Home',
@@ -24,6 +27,13 @@ class _UserScreen extends State<UserScreen> {
     3: 'Notifications',
     4: 'Profile',
   };
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedIndex = widget.initialPageIndex;
+    pageController = PageController(initialPage: _selectedIndex);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,15 +46,6 @@ class _UserScreen extends State<UserScreen> {
         ),
         automaticallyImplyLeading: false,
         backgroundColor: Constants.primaryColor,
-        // actions: <Widget>[
-        //   IconButton(
-        //     icon: const Icon(Icons.more_vert),
-        //     color: Colors.white,
-        //     onPressed: () {
-        //       // Handle settings action
-        //     },
-        //   ),
-        // ],
       ),
       body: PageView(
         controller: pageController,
@@ -56,7 +57,7 @@ class _UserScreen extends State<UserScreen> {
         children: const <Widget>[
           Home(),
           History(),
-          Scan(),
+          BarcodeScannerWithOverlay(),
           Notifications(),
           Profile(),
         ],

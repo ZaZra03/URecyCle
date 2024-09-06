@@ -35,7 +35,8 @@ class _ScanState extends State<Scan> {
     final cameras = await availableCameras();
     _cameraController = CameraController(
       cameras.first,
-      ResolutionPreset.high,
+      ResolutionPreset.medium,
+      enableAudio: false,
     );
     await _cameraController?.initialize();
     if (mounted) {
@@ -158,14 +159,11 @@ class _ScanState extends State<Scan> {
   List<double> _runInference(Float32List input) {
     print('Running model inference...');
 
-    // Reshape the input to [1, _inputSize, _inputSize, 3]
     var inputShape = [1, _inputSize, _inputSize, 3];
     var reshapedInput = input.buffer.asFloat32List(0, input.length);
 
-    // Update output buffer to match the model's expected output shape [1, 6]
     var output = List.filled(6, 0.0).reshape([1, 6]);
 
-    // Run inference
     _interpreter?.run(reshapedInput.reshape(inputShape), output);
 
     print('Inference complete. Output: $output');
@@ -175,6 +173,16 @@ class _ScanState extends State<Scan> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text('Result Screen'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+            Navigator.pop(context);
+          },
+        ),
+      ),
       body: Center(
         child: _isProcessing
             ? const CircularProgressIndicator()  // Show loading indicator while processing
