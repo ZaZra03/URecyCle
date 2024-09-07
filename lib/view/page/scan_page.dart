@@ -7,6 +7,8 @@ import 'package:tflite_flutter_helper_plus/tflite_flutter_helper_plus.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../../constants.dart';
+
 class Scan extends StatefulWidget {
   const Scan({super.key});
 
@@ -19,8 +21,10 @@ class _ScanState extends State<Scan> {
   Interpreter? _interpreter;
   final _inputSize = 224;
   List<String> _labels = [];
-  String _classificationResult = 'No result';
-  bool _isProcessing = false;  // Flag to track if the classification is processing
+  String _classificationResult = '';
+  bool _isProcessing = true;
+  bool _isCameraInitialized = false;
+  int? _classificationIndex;
 
   @override
   void initState() {
@@ -28,10 +32,12 @@ class _ScanState extends State<Scan> {
     _initializeCamera();
     _loadModel();
     _loadLabels();
-    _takePictureAndProcess(); // Trigger the capture and processing when the page is loaded
+    WidgetsBinding.instance.addPostFrameCallback((_) => _takePictureAndProcess());
   }
 
   Future<void> _initializeCamera() async {
+    if (_isCameraInitialized) return;  // Prevent reinitialization if already initialized
+
     final cameras = await availableCameras();
     _cameraController = CameraController(
       cameras.first,
@@ -40,7 +46,9 @@ class _ScanState extends State<Scan> {
     );
     await _cameraController?.initialize();
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _isCameraInitialized = true;  // Set flag to true after initialization
+      });
     }
   }
 
@@ -81,10 +89,6 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> _takePictureAndProcess() async {
-    setState(() {
-      _isProcessing = true;  // Start processing
-    });
-
     try {
       print('Taking picture...');
 
@@ -93,9 +97,12 @@ class _ScanState extends State<Scan> {
 
       if (pickedFile == null) {
         print('No image selected.');
-        setState(() {
-          _isProcessing = false;  // Stop processing
-        });
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+            _classificationResult = 'No image selected.';
+          });
+        }
         return;
       }
 
@@ -109,28 +116,47 @@ class _ScanState extends State<Scan> {
       print('Running inference...');
       final output = _runInference(input);
 
-      if (output.isEmpty) {
-        print('Inference output is empty.');
-        setState(() {
-          _isProcessing = false;  // Stop processing
-        });
-        return;
-      }
-
       int maxIndex = output.indexWhere((element) => element == output.reduce((a, b) => a > b ? a : b));
       print('Inference result index: $maxIndex, label: ${_labels[maxIndex]}');
 
-      setState(() {
-        _classificationResult = _labels[maxIndex];
-      });
+      if (mounted) {
+        setState(() {
+          _classificationResult = _labels[maxIndex];
+          _classificationIndex = maxIndex;
+        });
+      }
+
+      // Navigate directly to the result screen based on the classification result
+      if (mounted) {
+        if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Green(result: _classificationResult)),
+          );
+        } else {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => Red(result: _classificationResult)),
+          );
+        }
+      }
     } catch (e) {
       print('Error: $e');
+      if (mounted) {
+        setState(() {
+          _classificationResult = 'Error occurred while processing.';
+        });
+      }
     } finally {
-      setState(() {
-        _isProcessing = false;  // Stop processing
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
+
+
 
   img.Image _preprocessImage(Uint8List imageData) {
     print('Preprocessing image...');
@@ -167,29 +193,18 @@ class _ScanState extends State<Scan> {
     _interpreter?.run(reshapedInput.reshape(inputShape), output);
 
     print('Inference complete. Output: $output');
-    return output[0]; // Returning the first (and only) output array
+    return output[0];
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Result Screen'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-            Navigator.pop(context);
-          },
-        ),
-      ),
+    return _isProcessing
+        ? Container() // Show an empty container while processing
+        : Scaffold(
       body: Center(
-        child: _isProcessing
-            ? const CircularProgressIndicator()  // Show loading indicator while processing
-            : Text(
-          'Result: $_classificationResult',
-          style: const TextStyle(fontSize: 20),
-        ),
+        child: _cameraController != null && _cameraController!.value.isInitialized
+            ? CameraPreview(_cameraController!)
+            : const CircularProgressIndicator(),  // Show loading while camera is initializing
       ),
     );
   }
@@ -199,5 +214,165 @@ class _ScanState extends State<Scan> {
     _cameraController?.dispose();
     _interpreter?.close();
     super.dispose();
+  }
+}
+
+class Red extends StatelessWidget {
+  final String result;
+
+  const Red({super.key, required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Scaffold(
+      body: Container(
+        color: Constants.primaryColor,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(
+                Icons.workspace_premium_outlined,
+                size: 150,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Thanks for being eco-friendly!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Disposed Waste: $result',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'You have received 10 points!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                    width: screenWidth * 0.8, // Responsive width
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Go Back",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class Green extends StatelessWidget {
+  final String result;
+
+  const Green({super.key, required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Scaffold(
+      body: Container(
+        color: Constants.primaryColor,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(
+                Icons.workspace_premium_outlined,
+                size: 150,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Thanks for being eco-friendly!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Disposed Waste: $result',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'You have received 10 points!',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                    width: screenWidth * 0.8, // Responsive width
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Go Back",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
