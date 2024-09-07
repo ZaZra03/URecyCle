@@ -1,58 +1,57 @@
 import 'package:flutter/material.dart';
+import '../../model/user_model.dart';
 import '../../utils/navigation_utils.dart';
 import '../leaderboard_screen.dart';
 import '../widget/leaderboard_card.dart';
+import 'package:urecycle_app/model/leaderboard_model.dart' as leaderboard_model;
+
 
 class Home extends StatelessWidget {
-  const Home({super.key});
+  final leaderboard_model.LeaderboardEntry? lbUser;
+  final UserModel? user;
+  List<Map<String, dynamic>> top3Users = [];
+
+  Home({super.key, this.lbUser, this.user, required this.top3Users});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: RefreshIndicator(
-        onRefresh: () async {
-          // Trigger data reload in the LeaderboardCard only on pull-to-refresh
-          LeaderboardCardState? cardState = LeaderboardCardState.instance;
-          if (cardState != null) {
-            await cardState.reloadData();
-          }
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Column(
-            children: [
-              LeaderboardCard(
-                onTap: () => handleTap(context, const LeaderboardPage()),
-              ),
-              _buildInfoCard(
-                title: 'Total Disposed Recycled Waste',
-                value: '0',
-                buttonText: 'Recycle',
-                onButtonPressed: () {
-                  // Add your action here
-                },
-              ),
-              _buildImageCard(
-                imagePath: 'assets/images/SGD_12.png',
-                title: 'Sustainable Development Goal 12',
-                subtitle:
-                    'Learn more about how this app supports the SDG 12 sustainable practices.',
-                onButtonPressed: () {
-                  // Add your action here
-                },
-              ),
-              _buildImageCard(
-                imagePath: 'assets/images/MNV.jpg',
-                title: 'Mission and Vision',
-                subtitle: 'Discover the University Mission and Vision.',
-                onButtonPressed: () {
-                  // Add your action here
-                },
-              ),
-              const SizedBox(height: 110), // Adjust spacing if needed
-            ],
-          ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            LeaderboardCard(
+              lbUser: lbUser,
+              user: user,
+              top3Users: top3Users,
+              onTap: () => handleTap(context, const LeaderboardPage()),
+            ),
+            _buildInfoCard(
+              title: 'Total Disposed Recycled Waste',
+              value: '0',
+              buttonText: 'Recycle',
+              onButtonPressed: () {
+                // Add your action here
+              },
+            ),
+            _buildImageCard(
+              imagePath: 'assets/images/SGD_12.png',
+              title: 'Sustainable Development Goal 12',
+              subtitle: 'Learn more about how SDG 12 fosters sustainable practices.',
+              onButtonPressed: () {
+                // Add your action here
+              },
+            ),
+            _buildImageCard(
+              imagePath: 'assets/images/MNV.jpg',
+              title: 'Mission and Vision',
+              subtitle: 'Discover the University Mission and Vision.',
+              onButtonPressed: () {
+                // Add your action here
+              },
+            ),
+            const SizedBox(height: 110), // Adjust spacing if needed
+          ],
         ),
       ),
     );

@@ -3,64 +3,40 @@ import 'package:urecycle_app/view/widget/profile_widget.dart';
 import 'package:urecycle_app/model/user_model.dart';
 import 'package:urecycle_app/constants.dart';
 import '../../services/auth_service.dart';
-import '../../utils/userdata_utils.dart';
 import '../login_screen.dart';
 
 class Profile extends StatefulWidget {
-  const Profile({super.key});
+  final UserModel? user;
+
+  const Profile({super.key, this.user});
 
   @override
   State createState() => _ProfileState();
 }
 
 class _ProfileState extends State<Profile> {
-  UserModel? _user;
-  bool _isLoading = true;
-  final Uri url = Uri.parse(Constants.user);
 
   @override
   void initState() {
     super.initState();
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    try {
-      final user = await fetchUserData(url);
-
-      setState(() {
-        _user = user;
-        _isLoading = false;
-      });
-    } catch (e) {
-      // Handle error appropriately
-      print('Error loading user data: $e');
-      setState(() {
-        _isLoading = false;
-      });
-    }
   }
 
   Future<void> _logout() async {
     await AuthService().logout();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => const LoginScreen()),
-    ); // Adjust the route as per your app's routing
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginScreen()),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    final initials = _user != null
-        ? '${_user!.firstName[0].toUpperCase()}${_user!.lastName[0].toUpperCase()}'
+    final initials = widget.user != null
+        ? '${widget.user!.firstName[0].toUpperCase()}${widget.user!.lastName[0].toUpperCase()}'
         : '';
 
     return Scaffold(
@@ -97,14 +73,14 @@ class _ProfileState extends State<Profile> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${_user?.firstName ?? 'Loading...'} ${_user?.lastName ?? ''}',
+                    '${widget.user?.firstName ?? 'Loading...'} ${widget.user?.lastName ?? ''}',
                     style: TextStyle(
                       color: Constants.blackColor,
                       fontSize: 20,
                     ),
                   ),
                   Text(
-                    _user?.email ?? 'Loading...',
+                    widget.user?.email ?? 'Loading...',
                     style: TextStyle(
                       color: Constants.blackColor.withOpacity(.3),
                     ),

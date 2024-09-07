@@ -4,8 +4,12 @@ import 'package:urecycle_app/view/page/home_page.dart';
 import 'package:urecycle_app/view/page/history_page.dart';
 import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
-import 'package:urecycle_app/view/page/scan_page.dart';
 import 'package:urecycle_app/view/page/qr_page.dart';
+
+import '../model/leaderboard_model.dart';
+import '../model/user_model.dart';
+import '../services/leaderboard_service.dart';
+import '../utils/userdata_utils.dart';
 
 class UserScreen extends StatefulWidget {
   final int initialPageIndex;
@@ -13,12 +17,17 @@ class UserScreen extends StatefulWidget {
   const UserScreen({super.key, this.initialPageIndex = 0});
 
   @override
-  State createState() => _UserScreen();
+  State<UserScreen> createState() => _UserScreenState();
 }
 
-class _UserScreen extends State<UserScreen> {
+class _UserScreenState extends State<UserScreen> {
   late PageController pageController;
   late int _selectedIndex;
+  LeaderboardEntry? _lbUser;
+  UserModel? _user;
+  final LeaderboardService _lbService = LeaderboardService();
+  final Uri _url = Uri.parse(Constants.user);
+  late List<Map<String, dynamic>> _top3Users = [];
 
   final Map<int, String> _pageTitles = {
     0: 'Home',
@@ -33,6 +42,25 @@ class _UserScreen extends State<UserScreen> {
     super.initState();
     _selectedIndex = widget.initialPageIndex;
     pageController = PageController(initialPage: _selectedIndex);
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final user = await fetchUserData(_url);
+      final lbUser = await _lbService.getEntryByStudentNumber(user?.studentNumber ?? '');
+      final top3Users = await _lbService.fetchTop3Entries();
+      print(lbUser?.name);
+      print(lbUser?.studentNumber);
+
+      setState(() {
+        _user = user;
+        _lbUser = lbUser;
+        _top3Users = top3Users;
+      });
+    } catch (e) {
+      print('Error loading user data: $e');
+    }
   }
 
   @override
@@ -41,7 +69,7 @@ class _UserScreen extends State<UserScreen> {
       extendBody: true,
       appBar: AppBar(
         title: Text(
-          _pageTitles[_selectedIndex] ?? 'App Title', // Default title if index not found
+          _pageTitles[_selectedIndex] ?? 'App Title',
           style: const TextStyle(color: Colors.white),
         ),
         automaticallyImplyLeading: false,
@@ -54,12 +82,12 @@ class _UserScreen extends State<UserScreen> {
             _selectedIndex = index;
           });
         },
-        children: const <Widget>[
-          Home(),
-          History(),
-          BarcodeScannerWithOverlay(),
-          Notifications(),
-          Profile(),
+        children: [
+          Home(lbUser: _lbUser, user: _user, top3Users: _top3Users,),
+          const History(),
+          const BarcodeScannerWithOverlay(),
+          const Notifications(),
+          Profile(user: _user),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -72,7 +100,7 @@ class _UserScreen extends State<UserScreen> {
         backgroundColor: Constants.primary02Color,
         foregroundColor: _selectedIndex == 2
             ? Colors.white
-            : Constants.gray04Color, // Default color
+            : Constants.gray04Color,
         shape: const CircleBorder(),
         child: const Icon(Icons.qr_code),
       ),
