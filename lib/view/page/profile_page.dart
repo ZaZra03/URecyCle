@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../provider/user_provider.dart';
 import 'package:urecycle_app/view/widget/profile_widget.dart';
-import 'package:urecycle_app/model/user_model.dart';
 import 'package:urecycle_app/constants.dart';
 import '../../services/auth_service.dart';
 import '../login_screen.dart';
 
 class Profile extends StatefulWidget {
-  final UserModel? user;
-
-  const Profile({super.key, this.user});
+  const Profile({super.key});
 
   @override
   State createState() => _ProfileState();
@@ -19,6 +18,14 @@ class _ProfileState extends State<Profile> {
   @override
   void initState() {
     super.initState();
+
+    // Ensure that fetchUserData is called after the widget has been built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.user == null || userProvider.lbUser == null) {
+        userProvider.fetchUserData();
+      }
+    });
   }
 
   Future<void> _logout() async {
@@ -35,18 +42,22 @@ class _ProfileState extends State<Profile> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
-    final initials = widget.user != null
-        ? '${widget.user!.firstName[0].toUpperCase()}${widget.user!.lastName[0].toUpperCase()}'
+    // Access UserProvider
+    final userProvider = Provider.of<UserProvider>(context);
+    final user = userProvider.user; // Get the user object from provider
+
+    final initials = user != null
+        ? '${user.firstName[0].toUpperCase()}${user.lastName[0].toUpperCase()}'
         : '';
 
     return Scaffold(
       body: SingleChildScrollView(
-        child: Container(
+        child: Padding(
           padding: const EdgeInsets.all(16),
-          width: size.width,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              // Avatar with user initials
               Container(
                 margin: const EdgeInsets.only(top: 25.0),
                 decoration: BoxDecoration(
@@ -69,46 +80,48 @@ class _ProfileState extends State<Profile> {
                 ),
               ),
               const SizedBox(height: 10),
+
+              // User info
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${widget.user?.firstName ?? 'Loading...'} ${widget.user?.lastName ?? ''}',
+                    '${user?.firstName ?? 'Loading...'} ${user?.lastName ?? ''}',
                     style: TextStyle(
                       color: Constants.blackColor,
                       fontSize: 20,
                     ),
                   ),
                   Text(
-                    widget.user?.email ?? 'Loading...',
+                    user?.email ?? 'Loading...',
                     style: TextStyle(
                       color: Constants.blackColor.withOpacity(.3),
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 30),
-              SingleChildScrollView(
-                child: SizedBox(
-                  height: size.height * .7,
-                  width: size.width,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      ProfileWidget(
-                        icon: Icons.settings,
-                        title: 'Account Settings',
-                        onTap: () {
-                          // Handle account settings tap
-                        },
-                      ),
-                      ProfileWidget(
-                        icon: Icons.logout,
-                        title: 'Log Out',
-                        onTap: _logout,
-                      ),
-                    ],
-                  ),
+
+              // Profile options
+              SizedBox(
+                width: size.width,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    ProfileWidget(
+                      icon: Icons.settings,
+                      title: 'Account Settings',
+                      onTap: () {
+                        // Handle account settings tap
+                      },
+                    ),
+                    ProfileWidget(
+                      icon: Icons.logout,
+                      title: 'Log Out',
+                      onTap: _logout,
+                    ),
+                  ],
                 ),
               ),
             ],

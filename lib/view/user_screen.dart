@@ -6,10 +6,6 @@ import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
 import 'package:urecycle_app/view/page/qr_page.dart';
 
-import '../model/leaderboard_model.dart';
-import '../model/user_model.dart';
-import '../services/leaderboard_service.dart';
-import '../utils/userdata_utils.dart';
 
 class UserScreen extends StatefulWidget {
   final int initialPageIndex;
@@ -23,11 +19,6 @@ class UserScreen extends StatefulWidget {
 class _UserScreenState extends State<UserScreen> {
   late PageController pageController;
   late int _selectedIndex;
-  LeaderboardEntry? _lbUser;
-  UserModel? _user;
-  final LeaderboardService _lbService = LeaderboardService();
-  final Uri _url = Uri.parse(Constants.user);
-  late List<Map<String, dynamic>> _top3Users = [];
 
   final Map<int, String> _pageTitles = {
     0: 'Home',
@@ -42,25 +33,6 @@ class _UserScreenState extends State<UserScreen> {
     super.initState();
     _selectedIndex = widget.initialPageIndex;
     pageController = PageController(initialPage: _selectedIndex);
-    _loadUserData();
-  }
-
-  Future<void> _loadUserData() async {
-    try {
-      final user = await fetchUserData(_url);
-      final lbUser = await _lbService.getEntryByStudentNumber(user?.studentNumber ?? '');
-      final top3Users = await _lbService.fetchTop3Entries();
-      print(lbUser?.name);
-      print(lbUser?.studentNumber);
-
-      setState(() {
-        _user = user;
-        _lbUser = lbUser;
-        _top3Users = top3Users;
-      });
-    } catch (e) {
-      print('Error loading user data: $e');
-    }
   }
 
   @override
@@ -82,12 +54,12 @@ class _UserScreenState extends State<UserScreen> {
             _selectedIndex = index;
           });
         },
-        children: [
-          Home(lbUser: _lbUser, user: _user, top3Users: _top3Users,),
-          const History(),
-          const BarcodeScannerWithOverlay(),
-          const Notifications(),
-          Profile(user: _user),
+        children: const [
+          Home(), // No need to pass lbUser, user, top3Users anymore
+          History(),
+          BarcodeScannerWithOverlay(),
+          Notifications(),
+          Profile(), // No need to pass user anymore
         ],
       ),
       floatingActionButton: FloatingActionButton(

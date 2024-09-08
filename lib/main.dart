@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-
+import 'package:provider/provider.dart';
 import 'view/login_screen.dart';
 import 'view/user_screen.dart';
+import 'provider/user_provider.dart'; // Import your UserProvider
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -12,17 +13,22 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    precacheImage(const AssetImage('assets/icon/logo.png'), context);
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => UserProvider(), // Provide the UserProvider
+        ),
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        home: const LoginScreen(), // LoginScreen as the initial screen
       ),
-      home: const UserScreen(),
     );
   }
 }

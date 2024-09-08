@@ -1,28 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:urecycle_app/model/user_model.dart';
 import '../../model/leaderboard_model.dart';
 import 'custom_card.dart';
 import 'leaderboard_position.dart';
+import '../../provider/user_provider.dart'; // Import your UserProvider
 
-class LeaderboardCard extends StatefulWidget {
-  final LeaderboardEntry? lbUser;
-  final UserModel? user;
-  final List<Map<String, dynamic>> top3Users;
+class LeaderboardCard extends StatelessWidget {
   final VoidCallback? onTap;
 
-  const LeaderboardCard({
-    super.key,
-    this.lbUser,
-    this.user,
-    required this.top3Users,
-    this.onTap,
-  });
+  const LeaderboardCard({super.key, this.onTap});
 
-  @override
-  State createState() => _LeaderboardCardState();
-}
-
-class _LeaderboardCardState extends State<LeaderboardCard> {
   String _sliceName(String name) {
     final parts = name.split(' ');
     return parts.isNotEmpty ? parts[0] : name;
@@ -30,18 +18,25 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
 
   @override
   Widget build(BuildContext context) {
-    final String initials = widget.user != null
-        ? '${widget.user!.firstName[0].toUpperCase()}${widget.user!.lastName[0].toUpperCase()}'
+    // Access the user and leaderboard data from the provider
+    final userProvider = Provider.of<UserProvider>(context);
+    final user = userProvider.user;
+    final lbUser = userProvider.lbUser;
+    final top3Users = userProvider.top3Users;
+
+    final String initials = user != null
+        ? '${user.firstName[0].toUpperCase()}${user.lastName[0].toUpperCase()}'
         : '';
 
+    // Prepare top 3 leaderboard entries
     final topEntries = List.generate(
       3,
-          (index) => widget.top3Users.length > index ? widget.top3Users[index] : null,
+          (index) => top3Users.length > index ? top3Users[index] : null,
       growable: false,
     );
 
     return CustomCard(
-      onTap: widget.onTap,
+      onTap: onTap,
       child: Column(
         children: [
           const SizedBox(height: 20),
@@ -97,14 +92,12 @@ class _LeaderboardCardState extends State<LeaderboardCard> {
               ],
             ),
           ),
-          UserCard(user: widget.user, lbUser: widget.lbUser, initials: initials),
+          UserCard(user: user, lbUser: lbUser, initials: initials),
         ],
       ),
     );
   }
 }
-
-
 
 class UserCard extends StatelessWidget {
   final UserModel? user;
@@ -142,8 +135,7 @@ class UserCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          lbUser?.college ??
-              'Loading...', // This could be user.country if you have a country field
+          lbUser?.college ?? 'Loading...',
           style: TextStyle(
             color: Colors.white,
             fontSize: MediaQuery.of(context).size.width * 0.03,
@@ -160,3 +152,4 @@ class UserCard extends StatelessWidget {
     );
   }
 }
+

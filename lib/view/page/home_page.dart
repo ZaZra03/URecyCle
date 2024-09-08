@@ -1,57 +1,75 @@
 import 'package:flutter/material.dart';
-import '../../model/user_model.dart';
+import 'package:provider/provider.dart';
+import '../../provider/user_provider.dart';
 import '../../utils/navigation_utils.dart';
 import '../leaderboard_screen.dart';
 import '../widget/leaderboard_card.dart';
-import 'package:urecycle_app/model/leaderboard_model.dart' as leaderboard_model;
 
+class Home extends StatefulWidget {
+  const Home({super.key});
 
-class Home extends StatelessWidget {
-  final leaderboard_model.LeaderboardEntry? lbUser;
-  final UserModel? user;
-  List<Map<String, dynamic>> top3Users = [];
+  @override
+  State createState() => _HomeState();
+}
 
-  Home({super.key, this.lbUser, this.user, required this.top3Users});
+class _HomeState extends State<Home> {
+  @override
+  void initState() {
+    super.initState();
+
+    // Ensure that fetchUserData is called after the widget has been built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      if (userProvider.user == null || userProvider.lbUser == null) {
+        userProvider.fetchUserData();
+      }
+    });
+  }
+
+  Future<void> _refreshData() async {
+    await Provider.of<UserProvider>(context, listen: false).fetchUserData();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            LeaderboardCard(
-              lbUser: lbUser,
-              user: user,
-              top3Users: top3Users,
-              onTap: () => handleTap(context, const LeaderboardPage()),
-            ),
-            _buildInfoCard(
-              title: 'Total Disposed Recycled Waste',
-              value: '0',
-              buttonText: 'Recycle',
-              onButtonPressed: () {
-                // Add your action here
-              },
-            ),
-            _buildImageCard(
-              imagePath: 'assets/images/SGD_12.png',
-              title: 'Sustainable Development Goal 12',
-              subtitle: 'Learn more about how SDG 12 fosters sustainable practices.',
-              onButtonPressed: () {
-                // Add your action here
-              },
-            ),
-            _buildImageCard(
-              imagePath: 'assets/images/MNV.jpg',
-              title: 'Mission and Vision',
-              subtitle: 'Discover the University Mission and Vision.',
-              onButtonPressed: () {
-                // Add your action here
-              },
-            ),
-            const SizedBox(height: 110), // Adjust spacing if needed
-          ],
+      body: RefreshIndicator(
+        onRefresh: _refreshData,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              LeaderboardCard(
+                onTap: () => handleTap(context, const LeaderboardPage()),
+              ),
+              _buildInfoCard(
+                title: 'Total Disposed Recycled Waste',
+                value: '0',
+                buttonText: 'Recycle',
+                onButtonPressed: () {
+                  // Add your action here
+                },
+              ),
+              _buildImageCard(
+                imagePath: 'assets/images/SGD_12.png',
+                title: 'Sustainable Development Goal 12',
+                subtitle:
+                    'Learn more about how SDG 12 fosters sustainable practices.',
+                onButtonPressed: () {
+                  // Add your action here
+                },
+              ),
+              _buildImageCard(
+                imagePath: 'assets/images/MNV.jpg',
+                title: 'Mission and Vision',
+                subtitle: 'Discover the University Mission and Vision.',
+                onButtonPressed: () {
+                  // Add your action here
+                },
+              ),
+              const SizedBox(height: 110), // Adjust spacing if needed
+            ],
+          ),
         ),
       ),
     );
