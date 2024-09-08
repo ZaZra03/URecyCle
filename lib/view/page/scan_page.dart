@@ -3,10 +3,11 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
-import 'package:tflite_flutter_helper_plus/tflite_flutter_helper_plus.dart';
 import 'package:image/image.dart' as img;
 import 'package:flutter/services.dart' show rootBundle;
-
+import 'package:provider/provider.dart';
+import 'package:urecycle_app/services/leaderboard_service.dart';
+import '../../provider/user_provider.dart';
 import '../../constants.dart';
 
 class Scan extends StatefulWidget {
@@ -29,14 +30,23 @@ class _ScanState extends State<Scan> {
   @override
   void initState() {
     super.initState();
-    _initializeCamera();
-    _loadModel();
-    _loadLabels();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _takePictureAndProcess());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initializeCamera();
+      _loadModel();
+      _loadLabels();
+      _initializeUserProvider();
+    });
+  }
+
+  void _initializeUserProvider() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    if (userProvider.user == null || userProvider.lbUser == null) {
+      userProvider.fetchUserData();
+    }
   }
 
   Future<void> _initializeCamera() async {
-    if (_isCameraInitialized) return;  // Prevent reinitialization if already initialized
+    if (_isCameraInitialized) return;
 
     final cameras = await availableCameras();
     _cameraController = CameraController(
@@ -47,9 +57,11 @@ class _ScanState extends State<Scan> {
     await _cameraController?.initialize();
     if (mounted) {
       setState(() {
-        _isCameraInitialized = true;  // Set flag to true after initialization
+        _isCameraInitialized = true;
       });
     }
+
+    _takePictureAndProcess();
   }
 
   Future<void> _loadModel() async {
@@ -89,6 +101,15 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> _takePictureAndProcess() async {
+    if (!_isCameraInitialized) {
+      print('Camera is not initialized yet.');
+      return;
+    }
+
+    // Access UserProvider
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.user;
+
     try {
       print('Taking picture...');
 
@@ -126,20 +147,34 @@ class _ScanState extends State<Scan> {
         });
       }
 
+      if (user != null) {
+        final leaderboardService = LeaderboardService();
+        try {
+          if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
+            // Add points for recycling
+            await leaderboardService.addPointsToUser(user.studentNumber);
+            print('Points added for recycling.');
+          }
+        } catch (e) {
+          print('Failed to add points: $e');
+        }
+      }
+
       // Navigate directly to the result screen based on the classification result
       if (mounted) {
         if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Green(result: _classificationResult)),
+            MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
           );
         } else {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Red(result: _classificationResult)),
+            MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
           );
         }
       }
+
     } catch (e) {
       print('Error: $e');
       if (mounted) {
@@ -155,8 +190,6 @@ class _ScanState extends State<Scan> {
       }
     }
   }
-
-
 
   img.Image _preprocessImage(Uint8List imageData) {
     print('Preprocessing image...');
@@ -217,29 +250,29 @@ class _ScanState extends State<Scan> {
   }
 }
 
-class Red extends StatelessWidget {
+class Trash extends StatelessWidget {
   final String result;
 
-  const Red({super.key, required this.result});
+  const Trash({super.key, required this.result});
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       body: Container(
-        color: Constants.primaryColor,
+        color: Colors.grey[800], // Dark grey background for trash
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               const Icon(
-                Icons.workspace_premium_outlined,
+                Icons.delete_outline, // Trash icon
                 size: 150,
                 color: Colors.white,
               ),
               const SizedBox(height: 20),
               const Text(
-                'Thanks for being eco-friendly!',
+                'Waste Disposal Notice',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -255,7 +288,7 @@ class Red extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               const Text(
-                'You have received 10 points!',
+                'Please dispose of it properly.',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -297,10 +330,10 @@ class Red extends StatelessWidget {
   }
 }
 
-class Green extends StatelessWidget {
+class Recycle extends StatelessWidget {
   final String result;
 
-  const Green({super.key, required this.result});
+  const Recycle({super.key, required this.result});
 
   @override
   Widget build(BuildContext context) {
