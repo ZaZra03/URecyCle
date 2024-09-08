@@ -14,17 +14,11 @@ class Constants {
   static var gray04Color = const Color(0xFF666666);
 
   //Routes
-  static const url = 'http://10.133.66.64:3000/';
+  static const url = 'http://192.168.18.10:3000/';
   static const register = '${url}register';
   static const login = '${url}login';
   static const leaderboard = '${url}leaderboard';
+  static const lbUser = '${url}leaderboard';
+  static const lbTop3 = '${url}top-entries';
   static const user = '${url}user';
-
-  //Onboarding texts
-  static var titleOne = "Learn more about plants";
-  static var descriptionOne = "Read how to care for plants in our rich plants guide.";
-  static var titleTwo = "Find a plant lover friend";
-  static var descriptionTwo = "Are you a plant lover? Connect with other plant lovers.";
-  static var titleThree = "Plant a tree, green the Earth";
-  static var descriptionThree = "Find almost all types of plants that you like here.";
 }
