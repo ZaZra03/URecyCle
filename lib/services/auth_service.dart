@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
@@ -29,16 +30,11 @@ class AuthService {
   }) async {
     final Uri url = Uri.parse(Constants.register);
 
-    // print('Register URL: $url');
-    // print('Register Payload: ${jsonEncode({
-    //   'firstName': firstName,
-    //   'lastName': lastName,
-    //   'studentNumber': studentNumber,
-    //   'email': email,
-    //   'password': password,
-    // })}');
-
     try {
+      // Retrieve FCM token
+      final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
+      final String? fcmToken = await firebaseMessaging.getToken();
+
       final response = await http.post(
         url,
         headers: <String, String>{
@@ -51,15 +47,12 @@ class AuthService {
           'college': college,
           'email': email,
           'password': password,
+          'fcmToken': fcmToken, // Send FCM token to backend
         }),
       );
 
-      // print('Register Response Status Code: ${response.statusCode}');
-      // print('Register Response Body: ${response.body}');
-
       if (response.statusCode == 201) {
         final responseData = jsonDecode(response.body);
-        // Optionally, store the token here if available in the response
         final String? token = responseData['token'];
         if (token != null) {
           await storeToken(token);
@@ -81,13 +74,11 @@ class AuthService {
   }) async {
     final Uri url = Uri.parse(Constants.login);
 
-    // print('Login URL: $url');
-    // print('Login Payload: ${jsonEncode({
-    //   'studentNumber': studentNumber,
-    //   'password': password,
-    // })}');
-
     try {
+      // Retrieve FCM token
+      final FirebaseMessaging firebaseMessaging = FirebaseMessaging.instance;
+      final String? fcmToken = await firebaseMessaging.getToken();
+
       final response = await http.post(
         url,
         headers: <String, String>{
@@ -96,15 +87,12 @@ class AuthService {
         body: jsonEncode({
           'studentNumber': studentNumber,
           'password': password,
+          'fcmToken': fcmToken, // Send FCM token to backend
         }),
       );
 
-      print('Login Response Status Code: ${response.statusCode}');
-      print('Login Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        // Store the token received from the response
         final String? token = responseData['token'];
         if (token != null) {
           await storeToken(token);
@@ -112,13 +100,14 @@ class AuthService {
         return responseData;
       } else {
         final Map<String, dynamic> errorResponse = jsonDecode(response.body);
-        final String errorMessage = errorResponse['message'] ?? 'Failed to login';
+        final String errorMessage = errorResponse['error'] ?? 'Failed to login';
         throw Exception(errorMessage);
       }
     } catch (e) {
       throw Exception('Failed to login: $e');
     }
   }
+
 
   Future<void> logout() async {
     // Debug: Print token before deletion

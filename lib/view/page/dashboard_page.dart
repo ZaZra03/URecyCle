@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../services/firebase_service.dart';
 import '../widget/custom_card.dart';
 import 'package:urecycle_app/view/register_screen.dart';
 import '../leaderboard_screen.dart';
@@ -13,12 +14,35 @@ class Dashboard extends StatefulWidget {
 class _DashboardState extends State<Dashboard> {
   // Manage the state of the waste acceptance toggle
   bool isAcceptingWaste = false; // Initially, not accepting
+  final FirebaseApi _firebaseApi = FirebaseApi();
 
-  void _toggleWasteAcceptance() {
+  @override
+  void initState() {
+    super.initState();
+    _firebaseApi.initNotifications(); // Initialize notifications
+  }
+
+  void _toggleWasteAcceptance() async {
     setState(() {
       isAcceptingWaste = !isAcceptingWaste; // Toggle the state
     });
+
+    // Define notification content based on the current state
+    String title = isAcceptingWaste ? 'URecyCle' : 'URecyCle';
+    String body = 'Recycling Bin Ready: It\'s time to drop off your recyclables!';
+
+    // Send notification to all users
+    try {
+      await _firebaseApi.sendNotificationToAllUsers(
+        title: title,
+        body: body,
+      );
+      print("Notification sent to all users.");
+    } catch (e) {
+      print("Error sending notifications: $e");
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

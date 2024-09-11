@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/widget/auth_textfield.dart';
 import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/view/user_screen.dart';
 import 'package:urecycle_app/view/admin_screen.dart';
-// import 'package:urecycle_app/view/register_screen.dart';
-// import '../utils/navigation_utils.dart';
+
+import '../provider/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -24,17 +25,26 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       try {
+        // Login user
         final responseData = await _authService.loginUser(
           studentNumber: studentIDController.text,
           password: passwordController.text,
         );
 
+        // Check if the widget is still mounted before accessing context
+        if (!mounted) return;
+
         final user = responseData['user'];
         final String role = user['role'];
 
+        // Fetch user data after login
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        await userProvider.fetchUserData(); // Fetch user data here
+
+        // Check again if the widget is still mounted before navigating
         if (!mounted) return;
 
-        // Navigate based on role or handle accordingly
+        // Navigate based on role
         if (role == 'admin') {
           Navigator.pushReplacement(
             context,
@@ -46,7 +56,6 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (context) => const UserScreen()),
           );
         }
-
       } catch (e) {
         if (!mounted) return;
 
@@ -56,6 +65,8 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -137,6 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                     ),
+                    // Uncomment if needed
                     // const SizedBox(height: 15),
                     // Row(
                     //   mainAxisAlignment: MainAxisAlignment.center,

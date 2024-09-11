@@ -21,4 +21,6 @@ class Constants {
   static const lbUser = '${url}leaderboard';
   static const lbTop3 = '${url}top-entries';
   static const user = '${url}user';
+  static const allUsers = '${url}all-users';
+  static const sendNotification = '${url}send-notification';
 }

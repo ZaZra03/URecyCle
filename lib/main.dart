@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:urecycle_app/services/firebase_service.dart';
 import 'view/login_screen.dart';
-import 'view/user_screen.dart';
-import 'provider/user_provider.dart'; // Import your UserProvider
+import 'provider/user_provider.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:urecycle_app/firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  final firebaseApi = FirebaseApi();
+  await firebaseApi.initNotifications(); // Initialize notifications here
 
   runApp(const MyApp());
 }
@@ -18,7 +24,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => UserProvider(), // Provide the UserProvider
+          create: (_) => UserProvider(), // No need to initialize notifications here
         ),
       ],
       child: MaterialApp(

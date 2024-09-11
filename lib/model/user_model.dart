@@ -4,6 +4,9 @@ class UserModel {
   final String lastName;
   final String studentNumber;
   final String role;
+  final String password;
+  final String college;
+  final String? fcmToken;
 
   UserModel({
     required this.email,
@@ -11,6 +14,9 @@ class UserModel {
     required this.lastName,
     required this.studentNumber,
     required this.role,
+    required this.password,
+    required this.college,
+    this.fcmToken,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -20,6 +26,22 @@ class UserModel {
       lastName: json['lastName'],
       studentNumber: json['studentNumber'],
       role: json['role'],
+      password: json['password'],
+      college: json['college'],
+      fcmToken: json['fcmToken'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'email': email,
+      'firstName': firstName,
+      'lastName': lastName,
+      'studentNumber': studentNumber,
+      'role': role,
+      'password': password,
+      'college': college,
+      'fcmToken': fcmToken,
+    };
   }
 }
