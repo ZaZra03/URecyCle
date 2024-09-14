@@ -6,6 +6,7 @@ import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/view/user_screen.dart';
 import 'package:urecycle_app/view/admin_screen.dart';
 
+import '../provider/admin_provider.dart';
 import '../provider/user_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -37,24 +38,35 @@ class _LoginScreenState extends State<LoginScreen> {
         final user = responseData['user'];
         final String role = user['role'];
 
-        // Fetch user data after login
-        final userProvider = Provider.of<UserProvider>(context, listen: false);
-        await userProvider.fetchUserData(); // Fetch user data here
-
-        // Check again if the widget is still mounted before navigating
-        if (!mounted) return;
-
-        // Navigate based on role
+        // Use a different provider based on the role
         if (role == 'admin') {
+          // Get AdminProvider instance
+          final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+          await adminProvider.fetchAdminData(); // Fetch user data here
+
+          // Check again if the widget is still mounted before navigating
+          if (!mounted) return;
+
+          // Navigate to AdminScreen
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AdminScreen()),
+            MaterialPageRoute(builder: (context) => const AdminScreen(role: 'admin',)),
+          );
+        } else if (role == 'student') {
+          // Get UserProvider instance
+          final userProvider = Provider.of<UserProvider>(context, listen: false);
+          await userProvider.fetchUserData(); // Fetch user data here
+
+          // Check again if the widget is still mounted before navigating
+          if (!mounted) return;
+
+          // Navigate to UserScreen
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const UserScreen(role: 'student',)),
           );
         } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const UserScreen()),
-          );
+          throw Exception('Invalid role');
         }
       } catch (e) {
         if (!mounted) return;

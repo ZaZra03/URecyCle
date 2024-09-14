@@ -1,51 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../services/firebase_service.dart';
+import 'package:provider/provider.dart';
+import '../../provider/admin_provider.dart';
 import '../widget/custom_card.dart';
 import 'package:urecycle_app/view/register_screen.dart';
 import '../leaderboard_screen.dart';
 
-class Dashboard extends StatefulWidget {
+class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
 
   @override
-  State createState() => _DashboardState();
-}
-
-class _DashboardState extends State<Dashboard> {
-  // Manage the state of the waste acceptance toggle
-  bool isAcceptingWaste = false; // Initially, not accepting
-  final FirebaseApi _firebaseApi = FirebaseApi();
-
-  @override
-  void initState() {
-    super.initState();
-    _firebaseApi.initNotifications(); // Initialize notifications
-  }
-
-  void _toggleWasteAcceptance() async {
-    setState(() {
-      isAcceptingWaste = !isAcceptingWaste; // Toggle the state
-    });
-
-    // Define notification content based on the current state
-    String title = isAcceptingWaste ? 'URecyCle' : 'URecyCle';
-    String body = 'Recycling Bin Ready: It\'s time to drop off your recyclables!';
-
-    // Send notification to all users
-    try {
-      await _firebaseApi.sendNotificationToAllUsers(
-        title: title,
-        body: body,
-      );
-      print("Notification sent to all users.");
-    } catch (e) {
-      print("Error sending notifications: $e");
-    }
-  }
-
-
-  @override
   Widget build(BuildContext context) {
+    // Access AdminProvider through Provider
+    final adminProvider = Provider.of<AdminProvider>(context);
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: GridView.count(
@@ -54,19 +21,19 @@ class _DashboardState extends State<Dashboard> {
         mainAxisSpacing: 8.0, // Spacing between rows
         children: <Widget>[
           CustomCard(
-            onTap: _toggleWasteAcceptance, // Toggle state on tap
-            backgroundColor: isAcceptingWaste ? Colors.green : Colors.red,
+            onTap: adminProvider.toggleWasteAcceptance, // Use provider function to toggle waste acceptance
+            backgroundColor: adminProvider.isAcceptingWaste ? Colors.green : Colors.red,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  isAcceptingWaste ? Icons.check_circle : Icons.cancel,
+                  adminProvider.isAcceptingWaste ? Icons.check_circle : Icons.cancel,
                   size: 48.0,
                   color: Colors.white,
                 ),
                 const SizedBox(height: 8.0),
                 Text(
-                  isAcceptingWaste ? 'Accepting Waste' : 'Not Accepting',
+                  adminProvider.isAcceptingWaste ? 'Accepting Waste' : 'Not Accepting',
                   style: const TextStyle(fontSize: 16.0, color: Colors.white),
                 ),
               ],

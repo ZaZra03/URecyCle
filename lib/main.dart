@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:urecycle_app/provider/admin_provider.dart';
 import 'package:urecycle_app/services/firebase_service.dart';
 import 'view/login_screen.dart';
 import 'provider/user_provider.dart';
@@ -25,6 +26,9 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(
           create: (_) => UserProvider(), // No need to initialize notifications here
+        ),
+        ChangeNotifierProvider(
+          create: (_) => AdminProvider(), // No need to initialize notifications here
         ),
       ],
       child: MaterialApp(

@@ -5,7 +5,7 @@ class UserModel {
   final String studentNumber;
   final String role;
   final String password;
-  final String college;
+  final String? college;
   final String? fcmToken;
 
   UserModel({

@@ -9,8 +9,9 @@ import 'package:urecycle_app/view/page/qr_page.dart';
 
 class UserScreen extends StatefulWidget {
   final int initialPageIndex;
+  final String role;
 
-  const UserScreen({super.key, this.initialPageIndex = 0});
+  const UserScreen({super.key, this.initialPageIndex = 0, required this.role});
 
   @override
   State<UserScreen> createState() => _UserScreenState();
@@ -59,7 +60,7 @@ class _UserScreenState extends State<UserScreen> {
           History(),
           BarcodeScannerWithOverlay(),
           Notifications(),
-          Profile(), // No need to pass user anymore
+          Profile(role: 'student'), // No need to pass user anymore
         ],
       ),
       floatingActionButton: FloatingActionButton(

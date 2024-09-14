@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/user_provider.dart';
+import '../../provider/admin_provider.dart'; // Import AdminProvider
 import 'package:urecycle_app/view/widget/profile_widget.dart';
 import 'package:urecycle_app/constants.dart';
 import '../../services/auth_service.dart';
 import '../login_screen.dart';
 
 class Profile extends StatefulWidget {
-  const Profile({super.key});
+  final String role; // Accept role as a parameter
+
+  const Profile({super.key, required this.role});
 
   @override
   State createState() => _ProfileState();
@@ -19,11 +22,20 @@ class _ProfileState extends State<Profile> {
   void initState() {
     super.initState();
 
-    // Ensure that fetchUserData is called after the widget has been built
+    // Ensure that the correct provider's fetchData method is called based on the role
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      if (userProvider.user == null || userProvider.lbUser == null) {
-        userProvider.fetchUserData();
+      if (widget.role == 'admin') {
+        // Fetch admin data if the user is an admin
+        final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+        if (adminProvider.user == null) {
+          adminProvider.fetchAdminData();
+        }
+      } else {
+        // Fetch student data if the user is a student
+        final userProvider = Provider.of<UserProvider>(context, listen: false);
+        if (userProvider.user == null || userProvider.lbUser == null) {
+          userProvider.fetchUserData();
+        }
       }
     });
   }
@@ -42,9 +54,12 @@ class _ProfileState extends State<Profile> {
   Widget build(BuildContext context) {
     Size size = MediaQuery.of(context).size;
 
-    // Access UserProvider
-    final userProvider = Provider.of<UserProvider>(context);
-    final user = userProvider.user; // Get the user object from provider
+    // Access the correct provider based on the role
+    final userProvider = widget.role == 'student' ? Provider.of<UserProvider>(context) : null;
+    final adminProvider = widget.role == 'admin' ? Provider.of<AdminProvider>(context) : null;
+
+    // Get the user object from the respective provider
+    final user = widget.role == 'admin' ? adminProvider?.user : userProvider?.user;
 
     final initials = user != null
         ? '${user.firstName[0].toUpperCase()}${user.lastName[0].toUpperCase()}'
@@ -81,7 +96,7 @@ class _ProfileState extends State<Profile> {
               ),
               const SizedBox(height: 10),
 
-              // User info
+              // Display profile information based on the role
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [

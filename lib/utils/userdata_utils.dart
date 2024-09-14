@@ -21,6 +21,7 @@ Future<UserModel?> fetchUserData(Uri url) async {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
+      print(data);
       return UserModel.fromJson(data['user']);
     } else {
       throw Exception('Failed to load user data');

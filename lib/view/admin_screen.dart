@@ -5,7 +5,9 @@ import 'package:urecycle_app/view/page/profile_page.dart';
 import 'package:urecycle_app/view/page/scan_page.dart';
 
 class AdminScreen extends StatefulWidget {
-  const AdminScreen({super.key});
+  final String role;
+
+  const AdminScreen({super.key, required this.role});
 
   @override
   State<AdminScreen> createState() => _AdminScreenState();
@@ -51,9 +53,9 @@ class _AdminScreenState extends State<AdminScreen> {
           });
         },
         children: const <Widget>[
-          Dashboard(), // Ensure Dashboard is a StatefulWidget
-          Scan(), // Scan is StatelessWidget
-          Profile(), // Ensure Profile is a StatelessWidget
+          Dashboard(),
+          Scan(),
+          Profile(role: 'admin',),
         ],
       ),
       floatingActionButton: FloatingActionButton(
