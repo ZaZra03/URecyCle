@@ -20,7 +20,9 @@ class _BarcodeScannerWithOverlayState extends State<BarcodeScannerWithOverlay> {
   @override
   void initState() {
     super.initState();
-    controller.start(); // Automatically start the scanner
+    controller.start();
+    // Debug log for controller start
+    print('MobileScannerController started');
   }
 
   @override
@@ -43,15 +45,18 @@ class _BarcodeScannerWithOverlayState extends State<BarcodeScannerWithOverlay> {
             fit: BoxFit.cover,
             controller: controller,
             scanWindow: scanWindow,
-            // errorBuilder: (context, error, child) {
-            //   return ScannerErrorWidget(error: error);
-            // },
           ),
           // Overlay for scan window
           ValueListenableBuilder(
             valueListenable: controller,
             builder: (context, value, child) {
+              // Debug log for controller state
+              print('Controller state: isInitialized: ${value.isInitialized}, isRunning: ${value.isRunning}, error: ${value.error}');
+
               if (!value.isInitialized || !value.isRunning || value.error != null) {
+                if (value.error != null) {
+                  print('Error in scanner: ${value.error}');
+                }
                 return const SizedBox.shrink();
               }
               return CustomPaint(
@@ -89,7 +94,8 @@ class _BarcodeScannerWithOverlayState extends State<BarcodeScannerWithOverlay> {
 
   @override
   Future<void> dispose() async {
-    // controller.stop();
+    // Debug log for controller stop
+    print('Disposing MobileScannerController');
     controller.dispose();
     super.dispose();
   }
@@ -153,52 +159,6 @@ class ScannerOverlay extends CustomPainter {
   }
 }
 
-class ScannerErrorWidget extends StatelessWidget {
-  const ScannerErrorWidget({super.key, required this.error});
-
-  final MobileScannerException error;
-
-  @override
-  Widget build(BuildContext context) {
-    String errorMessage;
-
-    switch (error.errorCode) {
-      case MobileScannerErrorCode.controllerUninitialized:
-        errorMessage = 'Controller not ready.';
-      case MobileScannerErrorCode.permissionDenied:
-        errorMessage = 'Permission denied';
-      case MobileScannerErrorCode.unsupported:
-        errorMessage = 'Scanning is unsupported on this device';
-      default:
-        errorMessage = 'Generic Error';
-        break;
-    }
-
-    return ColoredBox(
-      color: Colors.black,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Padding(
-              padding: EdgeInsets.only(bottom: 16),
-              child: Icon(Icons.error, color: Colors.white),
-            ),
-            Text(
-              errorMessage,
-              style: const TextStyle(color: Colors.white),
-            ),
-            Text(
-              error.errorDetails?.message ?? '',
-              style: const TextStyle(color: Colors.white),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class ToggleFlashlightButton extends StatelessWidget {
   const ToggleFlashlightButton({required this.controller, super.key});
 
@@ -209,6 +169,9 @@ class ToggleFlashlightButton extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: controller,
       builder: (context, state, child) {
+        // Debug log for flashlight state
+        print('Flashlight state: ${state.torchState}');
+
         if (!state.isInitialized || !state.isRunning) {
           return const SizedBox.shrink();
         }
@@ -262,6 +225,9 @@ class SwitchCameraButton extends StatelessWidget {
     return ValueListenableBuilder(
       valueListenable: controller,
       builder: (context, state, child) {
+        // Debug log for camera direction
+        print('Camera direction: ${state.cameraDirection}');
+
         if (!state.isInitialized || !state.isRunning) {
           return const SizedBox.shrink();
         }
@@ -314,18 +280,25 @@ class _ScannedBarcodeLabelState extends State<ScannedBarcodeLabel> {
       stream: widget.barcodes,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
+          // Debug log for scan error
+          print('Error during scanning: ${snapshot.error}');
           return const Text(
             'Error scanning. Please try again.',
             style: TextStyle(color: Colors.red),
           );
         }
+
         final scannedBarcodes = snapshot.data?.barcodes ?? [];
+
+        // Debug log for scanned barcodes
+        print('Scanned barcodes: ${scannedBarcodes.map((e) => e.displayValue).toList()}');
 
         if (scannedBarcodes.isNotEmpty) {
           final displayValue = scannedBarcodes.first.displayValue ?? 'No display value.';
 
           SchedulerBinding.instance.addPostFrameCallback((_) {
             if (displayValue == widget.targetQRCode) {
+              print('Target QR Code detected: $displayValue');
               Navigator.push(
                 context,
                 MaterialPageRoute(
