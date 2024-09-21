@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../services/firebase_service.dart';
+import 'package:urecycle_app/services/auth_service.dart';
 import '../constants.dart';
 import '../model/user_model.dart';
-import 'package:urecycle_app/utils/userdata_utils.dart';
+// import 'package:urecycle_app/utils/userdata_utils.dart';
 
 class AdminProvider with ChangeNotifier {
   bool isAcceptingWaste = false;

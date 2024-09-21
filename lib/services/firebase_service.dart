@@ -1,23 +1,44 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
-
 import '../constants.dart';
 
 class FirebaseApi {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final String url1 = Constants.sendNotification;
-  final String url2 = Constants.allUsers;
+  final FlutterLocalNotificationsPlugin _localNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final String urlNotifications = Constants.getNotification;
   bool _isListening = false;
 
   Future<void> initNotifications() async {
-    // Request notification permissions from the user
+    // Request permissions for iOS
     await _firebaseMessaging.requestPermission();
     final fcmToken = await _firebaseMessaging.getToken();
     print('Token: $fcmToken');
 
-    // Avoid adding multiple listeners
+    // Initialize local notifications
+    const AndroidInitializationSettings initializationSettingsAndroid =
+    AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings initializationSettings =
+    InitializationSettings(android: initializationSettingsAndroid);
+
+    await _localNotificationsPlugin.initialize(initializationSettings);
+
+    // Create the notification channel (for Android 8.0+)
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'general_notifications',  // Channel ID
+      'General Notifications',   // Channel name
+      description: 'This channel is used for general notifications', // Optional description
+      importance: Importance.max,
+    );
+
+    await _localNotificationsPlugin
+        .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+
+    // Handle foreground messages
     if (!_isListening) {
       FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
         if (message.notification != null) {
@@ -25,29 +46,52 @@ class FirebaseApi {
           print('Message data: ${message.data}');
           print('Notification: ${notification.title}, ${notification.body}');
 
-          // Save notification locally
-          await _saveNotification(notification.title, notification.body);
+          // Show notification
+          await _localNotificationsPlugin.show(
+            0,
+            notification.title,
+            notification.body,
+            const NotificationDetails(
+              android: AndroidNotificationDetails(
+                'general_notifications',
+                'General Notifications',
+                icon: 'notification_icon',
+                importance: Importance.max,
+                priority: Priority.high,
+              ),
+            ),
+          );
         }
       });
-      _isListening = true; // Mark as listening
+      _isListening = true;
     }
   }
 
-  Future<void> _saveNotification(String? title, String? body) async {
-    final prefs = await SharedPreferences.getInstance();
-    List<String> notifications = prefs.getStringList('notifications') ?? [];
+  Future<List<dynamic>> fetchNotifications(String studentNumber) async {
+    final Uri uri = Uri.parse('${Constants.getNotification}/$studentNumber');
+    final response = await http.get(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
 
-    // Only save the notification once to prevent duplicates
-    final notificationJson = json.encode({'title': title, 'body': body});
-    if (!notifications.contains(notificationJson)) {
-      notifications.add(notificationJson);
-      await prefs.setStringList('notifications', notifications);
-      print("Notification saved: $title - $body");
+    if (response.statusCode == 200) {
+      return json.decode(response.body) as List<dynamic>;
     } else {
-      print("Notification already exists: $title - $body");
+      throw Exception('Failed to load notifications');
     }
   }
 
+  Future<void> deleteNotification(String studentNumber, String notificationId) async {
+    final Uri uri = Uri.parse('${Constants.getNotification}/$studentNumber/$notificationId');
+    final response = await http.delete(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to delete notification');
+    }
+  }
 
   Future<void> sendNotification({
     required String fcmToken,
@@ -57,7 +101,7 @@ class FirebaseApi {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse(url1),
+        Uri.parse(Constants.sendNotification),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'fcmToken': fcmToken,
@@ -83,9 +127,8 @@ class FirebaseApi {
     Map<String, String>? data,
   }) async {
     try {
-      // Fetch all users
       final response = await http.get(
-        Uri.parse(url2),
+        Uri.parse(Constants.allUsers),
         headers: {'Content-Type': 'application/json'},
       );
 
@@ -93,7 +136,6 @@ class FirebaseApi {
         List<dynamic> users = json.decode(response.body)['users'];
         print('Fetched ${users.length} users.');
 
-        // Use a Set to track already sent tokens and avoid duplicates
         final Set<String> sentTokens = <String>{};
 
         for (var user in users) {
@@ -107,7 +149,7 @@ class FirebaseApi {
                 body: body,
                 data: data,
               );
-              sentTokens.add(token);  // Add the token to the Set after sending notification
+              sentTokens.add(token);
             } else {
               print('Token already processed: $token');
             }
@@ -124,5 +166,4 @@ class FirebaseApi {
       print("Error fetching users or sending notifications: $e");
     }
   }
-
 }

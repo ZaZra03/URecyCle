@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart'; // Import for date formatting
-import 'dart:convert';
+import 'package:intl/intl.dart';
 import '../../provider/user_provider.dart';
 
 class Notifications extends StatefulWidget {
@@ -15,57 +14,55 @@ class _NotificationsState extends State<Notifications> {
   @override
   void initState() {
     super.initState();
+  }
 
-    // Ensure that loadNotifications is called after the widget has been built
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userProvider = Provider.of<UserProvider>(context, listen: false);
-      userProvider.loadNotifications(); // Load notifications when the widget is built
-    });
+  Future<void> _fetchNotifications() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.fetchNotifications();
   }
 
   Future<void> _refreshNotifications() async {
-    await Provider.of<UserProvider>(context, listen: false).loadNotifications();
+    await _fetchNotifications();
   }
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
+    final notifications = userProvider.notifications.reversed.toList(); // Reverse the list
 
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _refreshNotifications,
-        child: ListView.builder(
-          itemCount: userProvider.notifications.length,
+        child: ListView.separated(
+          itemCount: notifications.length + 1, // Increase itemCount by 1 to include the SizedBox
+          separatorBuilder: (context, index) => const Divider(),
           itemBuilder: (context, index) {
-            final notificationJson = userProvider.notifications[index];
+            // If the index is the last item, return SizedBox
+            if (index == notifications.length) {
+              return const SizedBox(height: 40);
+            }
 
-            // Initialize default values
-            String title = 'No Title';
-            String body = 'No Body';
-            String formattedTime = 'No Time';
+            final notification = notifications[index];
 
+            String title = notification['title'] ?? 'No Title';
+            String body = notification['body'] ?? 'No Body';
+            String notificationId = notification['_id'];
+
+            // Parse and format the 'createdAt' timestamp
+            String date = 'No Date';
+            String time = '';
             try {
-              // Decode the notification
-              final notification = json.decode(notificationJson);
-
-              // Extract and validate fields
-              title = notification['title'] ?? 'No Title';
-              body = notification['body'] ?? 'No Body';
-
-              final timestampStr = notification['timestamp'] as String?;
-              if (timestampStr != null) {
-                final timestamp = DateTime.parse(timestampStr).toLocal();
-                formattedTime = DateFormat('MMMM d \a\t h:mm a').format(timestamp);
-              } else {
-                print('Timestamp is null or invalid');
+              if (notification['createdAt'] != null) {
+                final createdAt = DateTime.parse(notification['createdAt']);
+                date = DateFormat('MMMM d, yyyy').format(createdAt.toLocal());
+                time = DateFormat('h:mm a').format(createdAt.toLocal());
               }
             } catch (e) {
-              // Log the error if JSON decoding fails
-              print('Error parsing notification: $e');
+              print('Error parsing date: $e');
             }
 
             return Dismissible(
-              key: Key(notificationJson), // Use the notification JSON or a unique ID
+              key: Key(notificationId),
               direction: DismissDirection.endToStart,
               background: Container(
                 color: Colors.red,
@@ -73,24 +70,48 @@ class _NotificationsState extends State<Notifications> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
-              onDismissed: (direction) {
-                userProvider.deleteNotification(index).then((_) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('$title deleted'),
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                });
+              onDismissed: (direction) async {
+                await userProvider.deleteNotification(notificationId);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('$title deleted'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
               },
               child: ListTile(
                 leading: const Icon(Icons.notifications),
-                title: Text(title),
-                subtitle: Text('$body\n$formattedTime'),
-                trailing: const Icon(Icons.arrow_forward_ios),
-                onTap: () {
-                  print('Notification tapped: $title');
-                },
+                title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4.0),
+                        child: Text(
+                          body,
+                          style: const TextStyle(color: Colors.black87),
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              date,
+                              style: TextStyle(color: Colors.grey[600]),
+                            ),
+                          ),
+                          Text(
+                            time,
+                            style: TextStyle(color: Colors.grey[600]),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               ),
             );
           },

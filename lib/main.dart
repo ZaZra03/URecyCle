@@ -6,29 +6,41 @@ import 'view/login_screen.dart';
 import 'provider/user_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:urecycle_app/firebase_options.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
-Future<void> main() async {
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  print("Handling a background message: ${message.messageId}");
+  // Handle background messages here
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Initialize FirebaseApi
   final firebaseApi = FirebaseApi();
-  await firebaseApi.initNotifications(); // Initialize notifications here
+  await firebaseApi.initNotifications();
 
-  runApp(const MyApp());
+  // Register background handler
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  runApp(MyApp(firebaseApi: firebaseApi));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final FirebaseApi firebaseApi;
+
+  const MyApp({super.key, required this.firebaseApi});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(
-          create: (_) => UserProvider(), // No need to initialize notifications here
+          create: (_) => UserProvider(),
         ),
         ChangeNotifierProvider(
-          create: (_) => AdminProvider(), // No need to initialize notifications here
+          create: (_) => AdminProvider(),
         ),
       ],
       child: MaterialApp(
@@ -37,7 +49,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: const LoginScreen(), // LoginScreen as the initial screen
+        home: const LoginScreen(),
       ),
     );
   }

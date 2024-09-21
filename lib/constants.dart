@@ -23,4 +23,5 @@ class Constants {
   static const user = '${url}user';
   static const allUsers = '${url}all-users';
   static const sendNotification = '${url}send-notification';
+  static const getNotification = '${url}notifications';
 }
