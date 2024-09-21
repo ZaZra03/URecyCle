@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
-import '../model/leaderboard_model.dart'; // Update this import path if necessary
+import '../model/leaderboard_model.dart';
+import 'package:urecycle_app/services/auth_service.dart';
+// import 'package:urecycle_app/utils/userdata_utils.dart';
 
 class LeaderboardService {
   // URLs for API endpoints
@@ -65,9 +67,8 @@ class LeaderboardService {
     }
   }
 
-// Fetch a specific leaderboard entry by student number from the server
+  // Fetch a specific leaderboard entry by student number from the server
   Future<LeaderboardEntry?> getEntryByStudentNumber(String studentNumber) async {
-    // Dynamically construct the URL by appending the studentNumber
     final Uri userUri = Uri.parse('${Constants.lbUser}/$studentNumber');
     print('User URL: $userUri'); // Debugging
 
@@ -125,5 +126,26 @@ class LeaderboardService {
     } catch (e) {
       throw Exception('Failed to add points: $e');
     }
+  }
+}
+
+// Function to load user data, leaderboard user entry, and top 3 entries
+Future<Map<String, dynamic>> loadUserData() async {
+  final LeaderboardService lbService = LeaderboardService();
+  final Uri url = Uri.parse(Constants.user);
+
+  try {
+    final user = await fetchUserData(url);
+    final lbUser = await lbService.getEntryByStudentNumber(user?.studentNumber ?? '');
+    final top3Users = await lbService.fetchTop3Entries();
+
+    return {
+      'user': user,
+      'lbUser': lbUser,
+      'top3Users': top3Users,
+    };
+  } catch (e) {
+    print('Error loading user data: $e');
+    throw e;
   }
 }
