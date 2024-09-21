@@ -5,9 +5,10 @@ import 'package:urecycle_app/view/widget/auth_textfield.dart';
 import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/view/user_screen.dart';
 import 'package:urecycle_app/view/admin_screen.dart';
-
+import 'package:urecycle_app/view/widget/loading_widget.dart';
 import '../provider/admin_provider.dart';
 import '../provider/user_provider.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -42,7 +43,17 @@ class _LoginScreenState extends State<LoginScreen> {
         if (role == 'admin') {
           // Get AdminProvider instance
           final adminProvider = Provider.of<AdminProvider>(context, listen: false);
-          await adminProvider.fetchAdminData(); // Fetch user data here
+          await adminProvider.fetchAdminData();
+
+          // Show loading page
+          showDialog(
+            context: context,
+            barrierDismissible: false, // Prevent dismissing the dialog
+            builder: (context) => const LoadingPage(),
+          );
+
+          // Introduce a delay of 1 second before navigating
+          await Future.delayed(const Duration(seconds: 2));
 
           // Check again if the widget is still mounted before navigating
           if (!mounted) return;
@@ -50,12 +61,23 @@ class _LoginScreenState extends State<LoginScreen> {
           // Navigate to AdminScreen
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const AdminScreen(role: 'admin',)),
+            MaterialPageRoute(builder: (context) => const AdminScreen(role: 'admin')),
           );
         } else if (role == 'student') {
           // Get UserProvider instance
           final userProvider = Provider.of<UserProvider>(context, listen: false);
-          await userProvider.fetchUserData(); // Fetch user data here
+          await userProvider.fetchUserData();
+          await userProvider.fetchNotifications();
+
+          // Show loading page
+          showDialog(
+            context: context,
+            barrierDismissible: false, // Prevent dismissing the dialog
+            builder: (context) => const LoadingPage(),
+          );
+
+          // Introduce a delay of 1 second before navigating
+          await Future.delayed(const Duration(seconds: 1));
 
           // Check again if the widget is still mounted before navigating
           if (!mounted) return;
@@ -63,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
           // Navigate to UserScreen
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const UserScreen(role: 'student',)),
+            MaterialPageRoute(builder: (context) => const UserScreen(role: 'student')),
           );
         } else {
           throw Exception('Invalid role');
@@ -71,12 +93,15 @@ class _LoginScreenState extends State<LoginScreen> {
       } catch (e) {
         if (!mounted) return;
 
+        Navigator.of(context).pop(); // Close the loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),
         );
       }
     }
   }
+
+
 
 
 

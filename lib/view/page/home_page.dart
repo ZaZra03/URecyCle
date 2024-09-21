@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../provider/user_provider.dart';
 import '../../utils/navigation_utils.dart';
 import '../leaderboard_screen.dart';
+import '../user_screen.dart';
 import '../widget/leaderboard_card.dart';
 
 class Home extends StatefulWidget {
@@ -47,7 +48,14 @@ class _HomeState extends State<Home> {
                 value: '0',
                 buttonText: 'Recycle',
                 onButtonPressed: () {
-                  // Add your action here
+                  // Navigate to the QR scan page in UserScreen
+                  setState(() {
+                    final userScreenState = context.findAncestorStateOfType<UserScreenState>();
+                    if (userScreenState != null) {
+                      userScreenState.setSelectedIndex(2);
+                      userScreenState.pageController.jumpToPage(2);
+                    }
+                  });
                 },
               ),
               _buildImageCard(
@@ -67,7 +75,7 @@ class _HomeState extends State<Home> {
                   // Add your action here
                 },
               ),
-              const SizedBox(height: 110), // Adjust spacing if needed
+              const SizedBox(height: 110),
             ],
           ),
         ),

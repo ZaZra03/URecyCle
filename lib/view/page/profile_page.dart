@@ -6,6 +6,7 @@ import 'package:urecycle_app/view/widget/profile_widget.dart';
 import 'package:urecycle_app/constants.dart';
 import '../../services/auth_service.dart';
 import '../login_screen.dart';
+import '../widget/loading_widget.dart';
 
 class Profile extends StatefulWidget {
   final String role; // Accept role as a parameter
@@ -41,7 +42,20 @@ class _ProfileState extends State<Profile> {
   }
 
   Future<void> _logout() async {
+    // Show loading page
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing the dialog
+      builder: (context) => const LoadingPage(),
+    );
+
+    // Perform logout
     await AuthService().logout();
+
+    // Introduce a delay of 1 second before navigating
+    await Future.delayed(const Duration(seconds: 1));
+
+    // Check if the widget is still mounted before navigating
     if (mounted) {
       Navigator.pushReplacement(
         context,
@@ -49,6 +63,7 @@ class _ProfileState extends State<Profile> {
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
