@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/user_provider.dart';
 import '../../utils/navigation_utils.dart';
-import '../leaderboard_screen.dart';
-import '../user_screen.dart';
+import '../screen/leaderboard_screen.dart';
+import '../screen/mission_vision_screen.dart';
+import '../screen/sgd_screen.dart';
+import '../screen/user_screen.dart';
 import '../widget/leaderboard_card.dart';
 
 class Home extends StatefulWidget {
@@ -24,15 +26,22 @@ class _HomeState extends State<Home> {
       if (userProvider.user == null || userProvider.lbUser == null) {
         userProvider.fetchUserData();
       }
+      userProvider.fetchTotalDisposals();
     });
   }
 
   Future<void> _refreshData() async {
-    await Provider.of<UserProvider>(context, listen: false).fetchUserData();
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    await userProvider.fetchUserData();
+
+    if (mounted) {
+      await userProvider.fetchTotalDisposals();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final totalDisposals = Provider.of<UserProvider>(context).totalDisposals.toString();
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _refreshData,
@@ -45,10 +54,9 @@ class _HomeState extends State<Home> {
               ),
               _buildInfoCard(
                 title: 'Total Disposed Recycled Waste',
-                value: '0',
+                value: totalDisposals,
                 buttonText: 'Recycle',
                 onButtonPressed: () {
-                  // Navigate to the QR scan page in UserScreen
                   setState(() {
                     final userScreenState = context.findAncestorStateOfType<UserScreenState>();
                     if (userScreenState != null) {
@@ -64,7 +72,12 @@ class _HomeState extends State<Home> {
                 subtitle:
                     'Learn more about how SDG 12 fosters sustainable practices.',
                 onButtonPressed: () {
-                  // Add your action here
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SGDScreen(),
+                    ),
+                  );
                 },
               ),
               _buildImageCard(
@@ -72,7 +85,12 @@ class _HomeState extends State<Home> {
                 title: 'Mission and Vision',
                 subtitle: 'Discover the University Mission and Vision.',
                 onButtonPressed: () {
-                  // Add your action here
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MissionVisionScreen(),
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 110),

@@ -5,7 +5,7 @@ import '../../provider/admin_provider.dart'; // Import AdminProvider
 import 'package:urecycle_app/view/widget/profile_widget.dart';
 import 'package:urecycle_app/constants.dart';
 import '../../services/auth_service.dart';
-import '../login_screen.dart';
+import '../screen/login_screen.dart';
 import '../widget/loading_widget.dart';
 
 class Profile extends StatefulWidget {
@@ -49,10 +49,16 @@ class _ProfileState extends State<Profile> {
       builder: (context) => const LoadingPage(),
     );
 
-    // Perform logout
+    if (widget.role == 'admin') {
+      final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+      adminProvider.reset();
+    } else {
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      userProvider.reset();
+    }
+
     await AuthService().logout();
 
-    // Introduce a delay of 1 second before navigating
     await Future.delayed(const Duration(seconds: 1));
 
     // Check if the widget is still mounted before navigating
@@ -63,7 +69,6 @@ class _ProfileState extends State<Profile> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {

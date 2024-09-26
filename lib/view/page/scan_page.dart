@@ -7,8 +7,11 @@ import 'package:image/image.dart' as img;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
+import 'package:urecycle_app/services/transaction_service.dart';
+import 'package:urecycle_app/view/widget/loading_widget.dart';
 import '../../provider/user_provider.dart';
 import '../../constants.dart';
+import '../screen/user_screen.dart';
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
@@ -149,10 +152,15 @@ class _ScanState extends State<Scan> {
 
       if (user != null) {
         final leaderboardService = LeaderboardService();
+        final transactionService = TransactionService();
         try {
           if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
             // Add points for recycling
             await leaderboardService.addPointsToUser(user.studentNumber);
+            await transactionService.createTransaction(user.studentNumber, _classificationResult, 10);
+            await userProvider.fetchUserData();
+            await userProvider.fetchTransactions();
+            await userProvider.fetchTotalDisposals();
             print('Points added for recycling.');
           }
         } catch (e) {
@@ -232,12 +240,10 @@ class _ScanState extends State<Scan> {
   @override
   Widget build(BuildContext context) {
     return _isProcessing
-        ? Container() // Show an empty container while processing
+        ? const LoadingPage()
         : Scaffold(
       body: Center(
-        child: _cameraController != null && _cameraController!.value.isInitialized
-            ? CameraPreview(_cameraController!)
-            : const CircularProgressIndicator(),  // Show loading while camera is initializing
+        child: CameraPreview(_cameraController!),
       ),
     );
   }
@@ -260,13 +266,13 @@ class Trash extends StatelessWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       body: Container(
-        color: Colors.grey[800], // Dark grey background for trash
+        color: Colors.grey[800],
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               const Icon(
-                Icons.delete_outline, // Trash icon
+                Icons.delete_outline,
                 size: 150,
                 color: Colors.white,
               ),
@@ -304,14 +310,44 @@ class Trash extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
                   onTap: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
+                          (Route<dynamic> route) => false,
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-                    width: screenWidth * 0.8, // Responsive width
+                    width: screenWidth * 0.8,
                     alignment: Alignment.center,
                     child: const Text(
                       "Go Back",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20), // Add space between buttons
+              Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    // Navigate to Learn More page or perform an action
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                    width: screenWidth * 0.8,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Learn More",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
@@ -384,14 +420,44 @@ class Recycle extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
                   onTap: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
+                          (Route<dynamic> route) => false,
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
-                    width: screenWidth * 0.8, // Responsive width
+                    width: screenWidth * 0.8,
                     alignment: Alignment.center,
                     child: const Text(
                       "Go Back",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20), // Add space between buttons
+              Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    // Navigate to Learn More page or perform an action
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                    width: screenWidth * 0.8,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Learn More",
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 20,
@@ -409,3 +475,4 @@ class Recycle extends StatelessWidget {
     );
   }
 }
+

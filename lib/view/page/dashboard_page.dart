@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/admin_provider.dart';
+import '../screen/userslist_screen.dart';
 import '../widget/custom_card.dart';
-import 'package:urecycle_app/view/register_screen.dart';
-import '../leaderboard_screen.dart';
+import 'package:urecycle_app/view/screen/register_screen.dart';
+import '../screen/leaderboard_screen.dart';
 
 class Dashboard extends StatelessWidget {
   const Dashboard({super.key});
@@ -54,10 +55,16 @@ class Dashboard extends StatelessWidget {
             ),
           ),
           CustomCard(
-            onTap: () {
-              // Handle tap for View Users card
+            onTap: () async {
+              await adminProvider.fetchUsers();  // Fetch the users
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => UserListScreen(),  // Navigate to the user list screen
+                ),
+              );
             },
-            backgroundColor: Colors.white, // Default color
+            backgroundColor: Colors.white,
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -67,6 +74,7 @@ class Dashboard extends StatelessWidget {
               ],
             ),
           ),
+
           CustomCard(
             onTap: () {
               Navigator.push(
