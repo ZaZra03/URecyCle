@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/page/home_page.dart';
-import 'package:urecycle_app/view/page/history_page.dart';
+import 'package:urecycle_app/view/page/transaction_page.dart';
 import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
 import 'package:urecycle_app/view/page/qr_page.dart';
+import 'package:urecycle_app/view/reward_screen.dart'; // Import your reward page
 
 import '../provider/admin_provider.dart';
 
@@ -59,6 +60,22 @@ class UserScreenState extends State<UserScreen> {
             ),
             automaticallyImplyLeading: false,
             backgroundColor: Constants.primaryColor,
+            actions: _selectedIndex == 0 // Display reward icon only on the Home page
+                ? [
+              IconButton(
+                icon: const Icon(Icons.card_giftcard), // Reward icon
+                onPressed: () {
+                  // Navigate to the reward page
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => RewardScreen(),
+                    ),
+                  );
+                },
+              ),
+            ]
+                : [],
           ),
           body: PageView(
             controller: pageController,
@@ -69,7 +86,7 @@ class UserScreenState extends State<UserScreen> {
             },
             children: [
               const Home(),
-              const History(),
+              const Transaction(),
               adminProvider.isAcceptingWaste
                   ? const BarcodeScannerWithOverlay()
                   : const SafeArea(
@@ -88,7 +105,6 @@ class UserScreenState extends State<UserScreen> {
                   ],
                 ),
               ),
-
               const Notifications(),
               const Profile(role: 'student'),
             ],

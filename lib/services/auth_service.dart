@@ -5,7 +5,6 @@ import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/model/user_model.dart';
 
-// AuthService to handle user registration, login, and token management
 class AuthService {
   // Store token locally in shared preferences
   static Future<void> storeToken(String token) async {

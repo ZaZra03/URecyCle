@@ -68,11 +68,11 @@ class _LoginScreenState extends State<LoginScreen> {
           final userProvider = Provider.of<UserProvider>(context, listen: false);
           await userProvider.fetchUserData();
           await userProvider.fetchNotifications();
+          await userProvider.fetchTransactions();
 
-          // Show loading page
           showDialog(
             context: context,
-            barrierDismissible: false, // Prevent dismissing the dialog
+            barrierDismissible: false,
             builder: (context) => const LoadingPage(),
           );
 
@@ -92,8 +92,6 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } catch (e) {
         if (!mounted) return;
-
-        Navigator.of(context).pop(); // Close the loading dialog
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),
         );

@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
-import '../../services/firebase_service.dart';
-import 'package:urecycle_app/services/auth_service.dart';
-import '../constants.dart';
+import '../services/auth_service.dart';
+import '../services/user_service.dart';
 import '../model/user_model.dart';
-// import 'package:urecycle_app/utils/userdata_utils.dart';
+import '../../services/firebase_service.dart';
+import '../constants.dart';
 
 class AdminProvider with ChangeNotifier {
   bool isAcceptingWaste = false;
   UserModel? _user;
-  final Uri url = Uri.parse(Constants.user);
+  List<UserModel> _users = [];
   final FirebaseApi _firebaseApi = FirebaseApi();
+  final UserService _userService = UserService();
 
   UserModel? get user => _user;
+  List<UserModel> get users => _users;  // Add getter for users
 
   AdminProvider() {
     _firebaseApi.initNotifications();
@@ -19,15 +21,25 @@ class AdminProvider with ChangeNotifier {
 
   Future<void> fetchAdminData() async {
     try {
-      _user = await fetchUserData(url);
+      _user = await fetchUserData(Uri.parse(Constants.user));
+      notifyListeners();
     } catch (e) {
       print('Error loading admin data: $e');
     }
   }
 
+  Future<void> fetchUsers() async {
+    try {
+      _users = await _userService.fetchUsers();
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching users: $e');
+    }
+  }
+
   void toggleWasteAcceptance() async {
     isAcceptingWaste = !isAcceptingWaste;
-    notifyListeners();  // Notify listeners when the state changes
+    notifyListeners();
 
     String title = 'URecyCle';
     String body = isAcceptingWaste
@@ -45,4 +57,9 @@ class AdminProvider with ChangeNotifier {
     }
   }
 
+  void reset() {
+    _user = null;
+    _users = [];
+    notifyListeners();
+  }
 }

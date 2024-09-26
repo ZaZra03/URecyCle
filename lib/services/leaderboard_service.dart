@@ -3,12 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
 import '../model/leaderboard_model.dart';
 import 'package:urecycle_app/services/auth_service.dart';
-// import 'package:urecycle_app/utils/userdata_utils.dart';
 
 class LeaderboardService {
   // URLs for API endpoints
   final Uri leaderboard = Uri.parse(Constants.leaderboard);
-  final Uri lbUser = Uri.parse(Constants.lbUser);
   final Uri lbTop3 = Uri.parse(Constants.lbTop3);
 
   // Fetch all leaderboard entries from the server
@@ -69,7 +67,7 @@ class LeaderboardService {
 
   // Fetch a specific leaderboard entry by student number from the server
   Future<LeaderboardEntry?> getEntryByStudentNumber(String studentNumber) async {
-    final Uri userUri = Uri.parse('${Constants.lbUser}/$studentNumber');
+    final Uri userUri = Uri.parse('${Constants.leaderboard}/$studentNumber');
     print('User URL: $userUri'); // Debugging
 
     try {
@@ -101,7 +99,7 @@ class LeaderboardService {
 
   // Add points to a specific leaderboard entry by student number
   Future<void> addPointsToUser(String studentNumber) async {
-    final Uri addPointsUri = Uri.parse('${Constants.lbUser}/$studentNumber/add-points');
+    final Uri addPointsUri = Uri.parse('${Constants.leaderboard}/$studentNumber/add-points');
     print('Add Points URL: $addPointsUri'); // Debugging
 
     try {
