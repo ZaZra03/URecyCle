@@ -6,9 +6,9 @@ import 'package:urecycle_app/view/page/transaction_page.dart';
 import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
 import 'package:urecycle_app/view/page/qr_page.dart';
-import 'package:urecycle_app/view/reward_screen.dart'; // Import your reward page
+import 'package:urecycle_app/view/screen/reward_screen.dart'; // Import your reward page
 
-import '../provider/admin_provider.dart';
+import '../../provider/admin_provider.dart';
 
 class UserScreen extends StatefulWidget {
   final int initialPageIndex;
@@ -63,7 +63,8 @@ class UserScreenState extends State<UserScreen> {
             actions: _selectedIndex == 0 // Display reward icon only on the Home page
                 ? [
               IconButton(
-                icon: const Icon(Icons.card_giftcard), // Reward icon
+                icon: const Icon(Icons.card_giftcard),
+                color: Colors.white,// Reward icon
                 onPressed: () {
                   // Navigate to the reward page
                   Navigator.push(

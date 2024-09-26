@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
 import 'package:urecycle_app/view/widget/leaderboard_position2.dart';
 
-import '../constants.dart';
+import '../../constants.dart';
 
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});

@@ -41,7 +41,7 @@ class LeaderboardCard extends StatelessWidget {
         children: [
           const SizedBox(height: 20),
           Text(
-            'Donation leaderboard',
+            'Recycle leaderboard',
             style: TextStyle(
               fontSize: MediaQuery.of(context).size.width * 0.06,
               fontWeight: FontWeight.bold,

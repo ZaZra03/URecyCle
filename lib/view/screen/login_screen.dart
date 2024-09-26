@@ -3,11 +3,11 @@ import 'package:provider/provider.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/widget/auth_textfield.dart';
 import 'package:urecycle_app/services/auth_service.dart';
-import 'package:urecycle_app/view/user_screen.dart';
-import 'package:urecycle_app/view/admin_screen.dart';
+import 'package:urecycle_app/view/screen/user_screen.dart';
+import 'package:urecycle_app/view/screen/admin_screen.dart';
 import 'package:urecycle_app/view/widget/loading_widget.dart';
-import '../provider/admin_provider.dart';
-import '../provider/user_provider.dart';
+import '../../provider/admin_provider.dart';
+import '../../provider/user_provider.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -69,6 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
           await userProvider.fetchUserData();
           await userProvider.fetchNotifications();
           await userProvider.fetchTransactions();
+          await userProvider.fetchTotalDisposals();
 
           showDialog(
             context: context,
