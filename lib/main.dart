@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:urecycle_app/provider/admin_provider.dart';
 import 'package:urecycle_app/services/firebase_service.dart';
-import 'view/login_screen.dart';
+import 'view/screen/login_screen.dart';
 import 'provider/user_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:urecycle_app/firebase_options.dart';
