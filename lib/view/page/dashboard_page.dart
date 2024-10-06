@@ -60,7 +60,7 @@ class Dashboard extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => UserListScreen(),  // Navigate to the user list screen
+                  builder: (context) => const UserListScreen(),  // Navigate to the user list screen
                 ),
               );
             },

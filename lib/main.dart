@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:urecycle_app/provider/admin_provider.dart';
 import 'package:urecycle_app/services/firebase_service.dart';
@@ -23,6 +25,10 @@ void main() async {
 
   // Register background handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Initialize Hive
+  final directory = await getApplicationDocumentsDirectory();
+  Hive.init(directory.path);
 
   runApp(MyApp(firebaseApi: firebaseApi));
 }

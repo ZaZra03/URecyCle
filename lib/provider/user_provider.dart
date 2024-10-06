@@ -28,7 +28,8 @@ class UserProvider with ChangeNotifier {
   int get totalDisposals => _totalDisposals;
 
   final TransactionService _transactionService = TransactionService();
-  final DisposalService _disposalService = DisposalService(); // Create an instance of DisposalService
+  final LeaderboardService _leaderboardService = LeaderboardService();
+  final DisposalService _disposalService = DisposalService();
   final FirebaseApi _firebaseApi = FirebaseApi();
 
   Future<void> initNotifications() async {
@@ -40,7 +41,7 @@ class UserProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final data = await loadUserData();
+      final data = await _leaderboardService.loadUserData();
       _user = data['user'];
       _lbUser = data['lbUser'];
       _top3Users = List<Map<String, dynamic>>.from(data['top3Users']);

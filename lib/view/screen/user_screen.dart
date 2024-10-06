@@ -89,7 +89,7 @@ class UserScreenState extends State<UserScreen> {
               const Home(),
               const Transaction(),
               adminProvider.isAcceptingWaste
-                  ? const BarcodeScannerWithOverlay()
+                  ? const QRScanner(role: 'student')
                   : const SafeArea(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

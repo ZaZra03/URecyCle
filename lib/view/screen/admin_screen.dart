@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/page/dashboard_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
-import 'package:urecycle_app/view/page/scan_page.dart';
+import 'package:urecycle_app/view/page/qr_page.dart';
+// import 'package:urecycle_app/view/page/scan_page.dart';
 
 class AdminScreen extends StatefulWidget {
   final String role;
@@ -35,15 +36,6 @@ class _AdminScreenState extends State<AdminScreen> {
         ),
         automaticallyImplyLeading: false,
         backgroundColor: Constants.primaryColor,
-        // actions: <Widget>[
-        //   IconButton(
-        //     icon: const Icon(Icons.more_vert),
-        //     color: Colors.white,
-        //     onPressed: () {
-        //       // Handle settings action
-        //     },
-        //   ),
-        // ],
       ),
       body: PageView(
         controller: _pageController,
@@ -54,7 +46,7 @@ class _AdminScreenState extends State<AdminScreen> {
         },
         children: const <Widget>[
           Dashboard(),
-          Scan(),
+          QRScanner(role: 'admin',),
           Profile(role: 'admin',),
         ],
       ),
@@ -68,7 +60,7 @@ class _AdminScreenState extends State<AdminScreen> {
         backgroundColor: Constants.primary02Color,
         foregroundColor: _selectedIndex == 1 ? Colors.white : Constants.gray04Color,
         shape: const CircleBorder(),
-        child: const Icon(Icons.document_scanner_outlined),
+        child: const Icon(Icons.qr_code),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(

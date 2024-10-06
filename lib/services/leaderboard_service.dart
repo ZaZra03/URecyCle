@@ -125,25 +125,54 @@ class LeaderboardService {
       throw Exception('Failed to add points: $e');
     }
   }
-}
 
-// Function to load user data, leaderboard user entry, and top 3 entries
-Future<Map<String, dynamic>> loadUserData() async {
-  final LeaderboardService lbService = LeaderboardService();
-  final Uri url = Uri.parse(Constants.user);
+  Future<void> deductPointsFromUser(String studentNumber, int pointsToDeduct) async {
+    final Uri deductPointsUri = Uri.parse('${Constants.leaderboard}/$studentNumber/deduct-points');
+    print('Deduct Points URL: $deductPointsUri'); // Debugging
 
-  try {
-    final user = await fetchUserData(url);
-    final lbUser = await lbService.getEntryByStudentNumber(user?.studentNumber ?? '');
-    final top3Users = await lbService.fetchTop3Entries();
+    try {
+      final response = await http.post(
+        deductPointsUri,
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'pointsToDeduct': pointsToDeduct,
+        }),
+      );
 
-    return {
-      'user': user,
-      'lbUser': lbUser,
-      'top3Users': top3Users,
-    };
-  } catch (e) {
-    print('Error loading user data: $e');
-    throw e;
+      print('Deduct Points Response Status Code: ${response.statusCode}');
+      print('Deduct Points Response Body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        final Map<String, dynamic> errorResponse = jsonDecode(response.body);
+        final String errorMessage = errorResponse['error'] ?? 'Failed to deduct points';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      throw Exception('Failed to deduct points: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> loadUserData() async {
+    final LeaderboardService lbService = LeaderboardService();
+    final Uri url = Uri.parse(Constants.user);
+
+    try {
+      final user = await fetchUserData(url);
+      final lbUser = await lbService.getEntryByStudentNumber(user?.studentNumber ?? '');
+      final top3Users = await lbService.fetchTop3Entries();
+
+      return {
+        'user': user,
+        'lbUser': lbUser,
+        'top3Users': top3Users,
+      };
+    } catch (e) {
+      print('Error loading user data: $e');
+      rethrow;
+    }
   }
 }
+
+

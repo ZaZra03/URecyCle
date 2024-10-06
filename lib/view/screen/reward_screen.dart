@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../constants.dart';
+import '../../provider/user_provider.dart';
 
 class RewardScreen extends StatelessWidget {
   RewardScreen({super.key});
 
   final List<Map<String, dynamic>> rewards = [
-    {'name': 'Snack', 'points': 100, 'image': Icons.fastfood},
-    {'name': 'CP Load 50', 'points': 200, 'image': Icons.phone_android},
+    {'name': 'Snack', 'points': 1, 'image': Icons.fastfood, 'available': true},
+    {'name': 'CP Load 50', 'points': 200, 'image': Icons.phone_android, 'available': false},
   ];
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final lbUser = userProvider.lbUser;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -20,7 +26,30 @@ class RewardScreen extends StatelessWidget {
         ),
         backgroundColor: Constants.primaryColor,
         iconTheme: const IconThemeData(
-            color: Colors.white), // Set back button color to white
+          color: Colors.white,
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                Text(
+                  ((lbUser?.points ?? 0) * 0.10).toStringAsFixed(2),
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                ),
+                const SizedBox(width: 5),
+                const Icon(Icons.star, color: Colors.yellow),
+                const SizedBox(width: 10),
+                GestureDetector(
+                  onTap: () {
+                    _showPointsDialog(context);
+                  },
+                  child: const Icon(Icons.info_outline, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -47,8 +76,16 @@ class RewardScreen extends StatelessWidget {
                   Text(rewards[index]['name'],
                       style: const TextStyle(fontSize: 16)),
                   const SizedBox(height: 5),
-                  Text('${rewards[index]['points']} Points',
+                  Text('${rewards[index]['points']} Stars',
                       style: const TextStyle(color: Colors.grey)),
+                  const SizedBox(height: 5),
+                  Text(
+                    rewards[index]['available'] ? 'Available' : 'Not Available',
+                    style: TextStyle(
+                      color: rewards[index]['available'] ? Colors.green : Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -59,6 +96,31 @@ class RewardScreen extends StatelessWidget {
   }
 
   void _redeemReward(BuildContext context, Map<String, dynamic> reward) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final lbUser = userProvider.lbUser;
+
+    // Check if the reward is available
+    if (!reward['available']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This reward is not available!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    // Check if user has enough points
+    if ((lbUser?.points ?? 0) < reward['points']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Insufficient points to redeem this reward!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     showDialog(
       context: context,
       builder: (context) {
@@ -74,14 +136,69 @@ class RewardScreen extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Successfully redeemed ${reward['name']}!'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
+                _showQrCode(context, reward);
               },
               child: const Text('Redeem'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showQrCode(BuildContext context, Map<String, dynamic> reward) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final lbUser = userProvider.lbUser;
+
+    String qrData = '{"studentNumber": "${lbUser?.studentNumber}","name": "${reward['name']}", "points": ${reward['points']}}';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('QR Code for ${reward['name']}'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: 200,
+                height: 200,
+                child: QrImageView(
+                  data: qrData,
+                  version: QrVersions.auto,
+                  size: 200.0,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Show this QR code to claim your reward!',
+                style: TextStyle(fontSize: 14),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showPointsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Points Conversion'),
+          content: const Text('Stars = Points * 0.10', style: TextStyle(fontSize: 18)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
             ),
           ],
         );

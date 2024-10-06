@@ -9,7 +9,7 @@ import '../screen/login_screen.dart';
 import '../widget/loading_widget.dart';
 
 class Profile extends StatefulWidget {
-  final String role; // Accept role as a parameter
+  final String role;
 
   const Profile({super.key, required this.role});
 

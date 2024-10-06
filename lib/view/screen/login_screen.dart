@@ -59,9 +59,10 @@ class _LoginScreenState extends State<LoginScreen> {
           if (!mounted) return;
 
           // Navigate to AdminScreen
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const AdminScreen(role: 'admin')),
+                (Route<dynamic> route) => false,
           );
         } else if (role == 'student') {
           // Get UserProvider instance
@@ -84,10 +85,12 @@ class _LoginScreenState extends State<LoginScreen> {
           if (!mounted) return;
 
           // Navigate to UserScreen
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const UserScreen(role: 'student')),
+                (Route<dynamic> route) => false,
           );
+
         } else {
           throw Exception('Invalid role');
         }

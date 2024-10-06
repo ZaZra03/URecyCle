@@ -4,7 +4,7 @@ import '../../provider/user_provider.dart';
 import '../../utils/navigation_utils.dart';
 import '../screen/leaderboard_screen.dart';
 import '../screen/mission_vision_screen.dart';
-import '../screen/sgd_screen.dart';
+import '../screen/sdg_screen.dart';
 import '../screen/user_screen.dart';
 import '../widget/leaderboard_card.dart';
 

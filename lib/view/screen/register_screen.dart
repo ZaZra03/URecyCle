@@ -38,14 +38,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           password: passwordEditingController.text,
         );
 
-        // Check if the widget is still mounted before showing a SnackBar
         if (!mounted) return;
+
+        // Clear all input fields
+        setState(() {
+          firstNameEditingController.clear();
+          lastNameEditingController.clear();
+          studentIDEditingController.clear();
+          emailEditingController.clear();
+          passwordEditingController.clear();
+          confirmPasswordEditingController.clear();
+          selectedCollege = ''; // Reset dropdown to the default value
+        });
+
+        // Unfocus any selected text field
+        FocusScope.of(context).unfocus();
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Registration successful: ${response['message']}')),
         );
       } catch (e) {
-        // Check if the widget is still mounted before showing a SnackBar
         if (!mounted) return;
 
         ScaffoldMessenger.of(context).showSnackBar(
