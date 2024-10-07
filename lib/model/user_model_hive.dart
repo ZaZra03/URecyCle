@@ -1,13 +1,32 @@
+import 'package:hive/hive.dart';
+
+part 'user_model_hive.g.dart';
+
+@HiveType(typeId: 1)
 class UserModel {
+  @HiveField(0)
   final String email;
+
+  @HiveField(1)
   final String firstName;
-  final String? lastName;
+
+  @HiveField(2)
+  final String lastName;
+
+  @HiveField(3)
   final String studentNumber;
+
+  @HiveField(4)
   final String role;
+
+  @HiveField(5)
   final String password;
+
+  @HiveField(6)
   final String? college;
+
+  @HiveField(7)
   final String? fcmToken;
-  final bool? acceptingWaste;
 
   UserModel({
     required this.email,
@@ -16,9 +35,8 @@ class UserModel {
     required this.studentNumber,
     required this.role,
     required this.password,
-    required this.college,
+    this.college,
     this.fcmToken,
-    this.acceptingWaste,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -31,7 +49,6 @@ class UserModel {
       password: json['password'],
       college: json['college'],
       fcmToken: json['fcmToken'],
-      acceptingWaste: json['acceptingWaste'],
     );
   }
 
@@ -45,7 +62,6 @@ class UserModel {
       'password': password,
       'college': college,
       'fcmToken': fcmToken,
-      'acceptingWaste': acceptingWaste,
     };
   }
 }

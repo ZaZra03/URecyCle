@@ -1,7 +1,19 @@
+import 'package:hive/hive.dart';
+
+part 'leaderboard_model_hive.g.dart';
+
+@HiveType(typeId: 0)
 class LeaderboardEntry {
+  @HiveField(0)
   final String name;
+
+  @HiveField(1)
   final String studentNumber;
+
+  @HiveField(2)
   final String college;
+
+  @HiveField(3)
   final int points;
 
   LeaderboardEntry({
