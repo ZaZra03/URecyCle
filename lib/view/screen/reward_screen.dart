@@ -179,7 +179,10 @@ class RewardScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () {
+                userProvider.notifyListeners();
+                Navigator.of(context).pop();
+              },
               child: const Text('Close'),
             ),
           ],
