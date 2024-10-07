@@ -36,17 +36,27 @@ class _QRScannerState extends State<QRScanner> {
   void _processScannedCode(BuildContext context, String? scannedCode) async {
     if (scannedCode == null || _isProcessing) return;
 
-    _isProcessing = true; // Prevent multiple scans
+    setState(() {
+      _isProcessing = true; // Prevent multiple scans
+    });
+
+    // Optionally stop the camera while processing
+    controller.stop();
 
     if (widget.role == 'student') {
       if (scannedCode == 'URECYCLE') {
-        // Navigate to the scan page
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => const Scan(),
           ),
-        );
+        ).then((_) {
+          // Restart scanner when returning to the page
+          controller.start();
+          setState(() {
+            _isProcessing = false; // Reset the processing flag after navigation
+          });
+        });
       }
     } else if (widget.role == 'admin') {
       final leaderboardService = LeaderboardService();
@@ -66,12 +76,15 @@ class _QRScannerState extends State<QRScanner> {
         await _showRewardDetails(context, name, points);
       } catch (e) {
         print('Failed to decode QR code: $e');
+      } finally {
+        controller.start(); // Restart scanner
+        setState(() {
+          _isProcessing = false; // Reset the processing flag after completion
+        });
       }
     }
-
-    // Reset the flag here after the process completes
-    _isProcessing = false;
   }
+
 
   Future<void> _showRewardDetails(BuildContext context, String name, int points) {
     return showDialog(

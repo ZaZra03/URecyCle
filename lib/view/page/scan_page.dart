@@ -27,13 +27,15 @@ class _ScanState extends State<Scan> {
   List<String> _labels = [];
   String _classificationResult = '';
   bool _isProcessing = true;
-  bool _isCameraInitialized = false;
+  // bool _isCameraInitialized = false;
   int? _classificationIndex;
 
   @override
   void initState() {
     super.initState();
+    print("InitState");
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("Calling Methods");
       _initializeCamera();
       _loadModel();
       _loadLabels();
@@ -49,7 +51,9 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> _initializeCamera() async {
-    if (_isCameraInitialized) return;
+    print("Initializing Scan Camera");
+    // print(_isCameraInitialized);
+    // if (_isCameraInitialized) return;
 
     final cameras = await availableCameras();
     _cameraController = CameraController(
@@ -58,11 +62,11 @@ class _ScanState extends State<Scan> {
       enableAudio: false,
     );
     await _cameraController?.initialize();
-    if (mounted) {
-      setState(() {
-        _isCameraInitialized = true;
-      });
-    }
+    // if (mounted) {
+    //   setState(() {
+    //     _isCameraInitialized = true;
+    //   });
+    // }
 
     _takePictureAndProcess();
   }
@@ -104,10 +108,10 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> _takePictureAndProcess() async {
-    if (!_isCameraInitialized) {
-      print('Camera is not initialized yet.');
-      return;
-    }
+    // if (!_isCameraInitialized) {
+    //   print('Camera is not initialized yet.');
+    //   return;
+    // }
 
     // Access UserProvider
     final userProvider = Provider.of<UserProvider>(context, listen: false);
@@ -239,8 +243,8 @@ class _ScanState extends State<Scan> {
 
   @override
   Widget build(BuildContext context) {
-    return _isProcessing
-        ? const LoadingPage()
+    return _isProcessing || _cameraController == null || !_cameraController!.value.isInitialized
+        ? const LoadingPage()  // Show loading while processing or initializing
         : Scaffold(
       body: Center(
         child: CameraPreview(_cameraController!),
@@ -250,6 +254,7 @@ class _ScanState extends State<Scan> {
 
   @override
   void dispose() {
+    _isProcessing = false;
     _cameraController?.dispose();
     _interpreter?.close();
     super.dispose();
