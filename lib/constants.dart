@@ -20,9 +20,11 @@ class Constants {
   static const leaderboard = '${url}leaderboard';
   static const lbTop3 = '${url}top-entries';
   static const user = '${url}user';
+  static const acceptingWaste = '${url}acceptingWaste';
   static const allUsers = '${url}all-users';
   static const sendNotification = '${url}send-notification';
   static const getNotification = '${url}notifications';
   static const createTransaction = '${url}transactions';
   static const totalDisposals = '${url}disposal';
+  static const binstate = '${url}binstate';
 }

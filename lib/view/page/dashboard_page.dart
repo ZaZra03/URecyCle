@@ -3,11 +3,39 @@ import 'package:provider/provider.dart';
 import '../../provider/admin_provider.dart';
 import '../screen/userslist_screen.dart';
 import '../widget/custom_card.dart';
-import 'package:urecycle_app/view/screen/register_screen.dart';
+import '../screen/register_screen.dart';
 import '../screen/leaderboard_screen.dart';
+import '../../services/binstate_service.dart';
 
-class Dashboard extends StatelessWidget {
+class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
+
+  @override
+  State createState() => _DashboardState();
+}
+
+class _DashboardState extends State<Dashboard> {
+  bool _isAcceptingWaste = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBinState();
+  }
+
+  Future<void> _fetchBinState() async {
+    try {
+      BinStateService binStateService = BinStateService();
+      bool? isAcceptingWaste = await binStateService.getAcceptingWasteStatus();
+      if (isAcceptingWaste != null) {
+        setState(() {
+          _isAcceptingWaste = isAcceptingWaste;
+        });
+      }
+    } catch (e) {
+      print('Error fetching bin state: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,29 +50,33 @@ class Dashboard extends StatelessWidget {
         mainAxisSpacing: 8.0, // Spacing between rows
         children: <Widget>[
           CustomCard(
-            onTap: adminProvider.toggleWasteAcceptance, // Use provider function to toggle waste acceptance
+            onTap: () async {
+              await adminProvider.toggleWasteAcceptance();
+              _fetchBinState(); // Refresh the bin state after toggling
+            },
             backgroundColor: adminProvider.isAcceptingWaste ? Colors.green : Colors.red,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
-                  adminProvider.isAcceptingWaste ? Icons.check_circle : Icons.cancel,
+                  _isAcceptingWaste ? Icons.check_circle : Icons.cancel,
                   size: 48.0,
                   color: Colors.white,
                 ),
                 const SizedBox(height: 8.0),
                 Text(
-                  adminProvider.isAcceptingWaste ? 'Accepting Waste' : 'Not Accepting',
+                  _isAcceptingWaste ? 'Accepting Waste' : 'Not Accepting',
                   style: const TextStyle(fontSize: 16.0, color: Colors.white),
                 ),
               ],
             ),
           ),
+          // Other cards remain unchanged
           CustomCard(
             onTap: () {
               // Handle tap for Analytics card
             },
-            backgroundColor: Colors.white, // Default color
+            backgroundColor: Colors.white,
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -56,11 +88,11 @@ class Dashboard extends StatelessWidget {
           ),
           CustomCard(
             onTap: () async {
-              await adminProvider.fetchUsers();  // Fetch the users
+              await adminProvider.fetchUsers(); // Fetch the users
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const UserListScreen(),  // Navigate to the user list screen
+                  builder: (context) => const UserListScreen(), // Navigate to the user list screen
                 ),
               );
             },
@@ -74,7 +106,6 @@ class Dashboard extends StatelessWidget {
               ],
             ),
           ),
-
           CustomCard(
             onTap: () {
               Navigator.push(
@@ -84,7 +115,7 @@ class Dashboard extends StatelessWidget {
                 ),
               );
             },
-            backgroundColor: Colors.white, // Default color
+            backgroundColor: Colors.white,
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -103,7 +134,7 @@ class Dashboard extends StatelessWidget {
                 ),
               );
             },
-            backgroundColor: Colors.white, // Default color
+            backgroundColor: Colors.white,
             child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
