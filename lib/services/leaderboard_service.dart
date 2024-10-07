@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
-import '../model/leaderboard_model.dart';
 import 'package:urecycle_app/services/auth_service.dart';
+import '../model/leaderboard_model.dart';
 
 class LeaderboardService {
   // URLs for API endpoints

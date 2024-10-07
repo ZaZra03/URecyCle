@@ -82,8 +82,11 @@ class _ProfileState extends State<Profile> {
     final user = widget.role == 'admin' ? adminProvider?.user : userProvider?.user;
 
     final initials = user != null
-        ? '${user.firstName[0].toUpperCase()}${user.lastName[0].toUpperCase()}'
+        ? widget.role == 'admin'
+        ? user.firstName[0].toUpperCase()
+        : '${user.firstName[0].toUpperCase()}${user.lastName?[0].toUpperCase()}'
         : '';
+
 
     return Scaffold(
       body: SingleChildScrollView(

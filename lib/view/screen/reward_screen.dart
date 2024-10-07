@@ -171,7 +171,7 @@ class RewardScreen extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               const Text(
-                'Show this QR code to claim your reward!',
+                'Show this QR code to the admin to claim your reward!',
                 style: TextStyle(fontSize: 14),
                 textAlign: TextAlign.center,
               ),

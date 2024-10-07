@@ -25,7 +25,7 @@ class LeaderboardCard extends StatelessWidget {
     final top3Users = userProvider.top3Users;
 
     final String initials = user != null
-        ? '${user.firstName[0].toUpperCase()}${user.lastName[0].toUpperCase()}'
+        ? '${user.firstName[0].toUpperCase()}${user.lastName?[0].toUpperCase()}'
         : '';
 
     // Prepare top 3 leaderboard entries
@@ -41,7 +41,7 @@ class LeaderboardCard extends StatelessWidget {
         children: [
           const SizedBox(height: 20),
           Text(
-            'Recycle leaderboard',
+            'Recycle Leaderboard',
             style: TextStyle(
               fontSize: MediaQuery.of(context).size.width * 0.06,
               fontWeight: FontWeight.bold,

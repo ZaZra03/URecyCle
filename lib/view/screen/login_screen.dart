@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/widget/auth_textfield.dart';
@@ -27,45 +28,41 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
       try {
-        // Login user
         final responseData = await _authService.loginUser(
           studentNumber: studentIDController.text,
           password: passwordController.text,
         );
 
-        // Check if the widget is still mounted before accessing context
         if (!mounted) return;
 
         final user = responseData['user'];
         final String role = user['role'];
 
-        // Use a different provider based on the role
+        // Save the role and login state to Hive
+        final box = await Hive.openBox('app_data');
+        await box.put('userRole', role); // Store the role in Hive
+        await box.put('isLoggedIn', true); // Store login state in Hive
+
         if (role == 'admin') {
-          // Get AdminProvider instance
           final adminProvider = Provider.of<AdminProvider>(context, listen: false);
           await adminProvider.fetchAdminData();
 
-          // Show loading page
           showDialog(
             context: context,
-            barrierDismissible: false, // Prevent dismissing the dialog
+            barrierDismissible: false,
             builder: (context) => const LoadingPage(),
           );
 
-          // Introduce a delay of 1 second before navigating
           await Future.delayed(const Duration(seconds: 2));
 
-          // Check again if the widget is still mounted before navigating
           if (!mounted) return;
 
-          // Navigate to AdminScreen
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const AdminScreen(role: 'admin')),
                 (Route<dynamic> route) => false,
           );
         } else if (role == 'student') {
-          // Get UserProvider instance
           final userProvider = Provider.of<UserProvider>(context, listen: false);
           await userProvider.fetchUserData();
           await userProvider.fetchNotifications();
@@ -78,19 +75,15 @@ class _LoginScreenState extends State<LoginScreen> {
             builder: (context) => const LoadingPage(),
           );
 
-          // Introduce a delay of 1 second before navigating
           await Future.delayed(const Duration(seconds: 1));
 
-          // Check again if the widget is still mounted before navigating
           if (!mounted) return;
 
-          // Navigate to UserScreen
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const UserScreen(role: 'student')),
                 (Route<dynamic> route) => false,
           );
-
         } else {
           throw Exception('Invalid role');
         }
@@ -102,10 +95,6 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
