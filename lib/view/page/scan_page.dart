@@ -58,7 +58,7 @@ class _ScanState extends State<Scan> {
     final cameras = await availableCameras();
     _cameraController = CameraController(
       cameras.first,
-      ResolutionPreset.medium,
+      ResolutionPreset.high,
       enableAudio: false,
     );
     await _cameraController?.initialize();
@@ -108,18 +108,10 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> _takePictureAndProcess() async {
-    // if (!_isCameraInitialized) {
-    //   print('Camera is not initialized yet.');
-    //   return;
-    // }
-
-    // Access UserProvider
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final user = userProvider.user;
 
     try {
-      print('Taking picture...');
-
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
@@ -134,59 +126,49 @@ class _ScanState extends State<Scan> {
         return;
       }
 
-      print('Image selected: ${pickedFile.path}');
-
       final bytes = await pickedFile.readAsBytes();
       final processedImage = _preprocessImage(bytes);
-
       Float32List input = _imageToByteListFloat32(processedImage, _inputSize);
 
-      print('Running inference...');
       final output = _runInference(input);
-
-      int maxIndex = output.indexWhere((element) => element == output.reduce((a, b) => a > b ? a : b));
-      print('Inference result index: $maxIndex, label: ${_labels[maxIndex]}');
+      double maxScore = output.reduce((a, b) => a > b ? a : b);
+      int maxIndex = output.indexWhere((element) => element == maxScore);
+      print(maxScore);
 
       if (mounted) {
-        setState(() {
-          _classificationResult = _labels[maxIndex];
-          _classificationIndex = maxIndex;
-        });
-      }
+        if (maxScore <= 0.5) {
+          // Show the "Unknown" result if the confidence score is not greater than 0.65
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
+          );
+        } else {
+          setState(() {
+            _classificationResult = _labels[maxIndex];
+            _classificationIndex = maxIndex;
+          });
 
-      if (user != null) {
-        final leaderboardService = LeaderboardService();
-        final transactionService = TransactionService();
-        try {
-          if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
-            // Add points for recycling
-            await leaderboardService.addPointsToUser(user.studentNumber);
-            await transactionService.createTransaction(user.studentNumber, _classificationResult, 10);
+          // Handle points, navigation, etc., only if it's a valid classification
+          if (user != null && _classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
+            await LeaderboardService().addPointsToUser(user.studentNumber);
+            await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
             await userProvider.fetchUserData();
             await userProvider.fetchTransactions();
             await userProvider.fetchTotalDisposals();
             print('Points added for recycling.');
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
+            );
           }
-        } catch (e) {
-          print('Failed to add points: $e');
         }
       }
-
-      // Navigate directly to the result screen based on the classification result
-      if (mounted) {
-        if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
-          );
-        } else {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
-          );
-        }
-      }
-
     } catch (e) {
       print('Error: $e');
       if (mounted) {
@@ -202,6 +184,7 @@ class _ScanState extends State<Scan> {
       }
     }
   }
+
 
   img.Image _preprocessImage(Uint8List imageData) {
     print('Preprocessing image...');
@@ -293,13 +276,123 @@ class Trash extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Disposed Waste: $result',
+                'Scanned Waste: $result',
                 style: const TextStyle(color: Colors.white, fontSize: 24),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
               const Text(
                 'Please dispose of it properly.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
+                          (Route<dynamic> route) => false,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                    width: screenWidth * 0.8,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Go Back",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20), // Add space between buttons
+              Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    // Navigate to Learn More page or perform an action
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                    width: screenWidth * 0.8,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Learn More",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class Unknown extends StatelessWidget {
+  final String result;
+
+  const Unknown({super.key, required this.result});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Scaffold(
+      body: Container(
+        color: Colors.grey[850],
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(
+                Icons.help_outline,
+                size: 150,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Unknown Disposal Notice',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Scanned Waste: $result',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'This waste type is not recognized. Please check and dispose of it responsibly.',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 18,
@@ -403,7 +496,7 @@ class Recycle extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Disposed Waste: $result',
+                'Scanned Waste: $result(Recyclable)',
                 style: const TextStyle(color: Colors.white, fontSize: 24),
                 textAlign: TextAlign.center,
               ),

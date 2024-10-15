@@ -12,7 +12,7 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   http: ^1.2.2
-  fl_chart: ^0.68.0
+  fl_chart: ^0.69.0
   shared_preferences: ^2.3.1
   camera: ^0.10.0
   image_picker: ^1.1.2
@@ -52,3 +52,6 @@ flutter:
     - assets/images/MNV.jpg
     - assets/model.tflite
     - assets/model.txt
+    - assets/model_quantized_uint8.tflite
+    - assets/classes.txt
+    - assets/waste_classification_model.tflite

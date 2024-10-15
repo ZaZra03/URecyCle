@@ -25,6 +25,8 @@ class Constants {
   static const sendNotification = '${url}send-notification';
   static const getNotification = '${url}notifications';
   static const createTransaction = '${url}transactions';
-  static const totalDisposals = '${url}disposal';
+  static const totalDisposals = '${url}total-disposal';
+  static const allDisposals = '${url}all-disposal';
+  static const String weeklyDisposals = '${url}weekly-disposals';
   static const binstate = '${url}binstate';
 }

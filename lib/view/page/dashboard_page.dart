@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/admin_provider.dart';
 import '../screen/userslist_screen.dart';
+import '../screen/visual_screen.dart';
 import '../widget/custom_card.dart';
 import '../screen/register_screen.dart';
 import '../screen/leaderboard_screen.dart';
@@ -74,7 +75,12 @@ class _DashboardState extends State<Dashboard> {
           // Other cards remain unchanged
           CustomCard(
             onTap: () {
-              // Handle tap for Analytics card
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const VisualMetricsScreen(),
+                ),
+              );
             },
             backgroundColor: Colors.white,
             child: const Column(
@@ -82,7 +88,7 @@ class _DashboardState extends State<Dashboard> {
               children: [
                 Icon(Icons.analytics, size: 48.0, color: Colors.blue),
                 SizedBox(height: 8.0),
-                Text('Analytics', style: TextStyle(fontSize: 16.0)),
+                Text('Visual Metrics', style: TextStyle(fontSize: 16.0)),
               ],
             ),
           ),

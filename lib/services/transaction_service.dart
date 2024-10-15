@@ -48,14 +48,4 @@ class TransactionService {
   }
 }
 
-// Example usage
-Future<void> handleTransaction() async {
-  final transactionService = TransactionService();
 
-  // Create a transaction
-  await transactionService.createTransaction('12345', 'Plastic', 10);
-
-  // Fetch transactions
-  final transactions = await transactionService.fetchTransactionsByStudentNumber('12345');
-  print(transactions);
-}

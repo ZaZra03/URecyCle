@@ -1,6 +1,6 @@
-Cardboard (Recyclable)
-Glass (Recyclable)
-Metal (Recyclable)
-Paper (Recyclable)
-Plastic (Recyclable)
+Cardboard
+Glass
+Metal
+Paper
+Plastic
 Trash

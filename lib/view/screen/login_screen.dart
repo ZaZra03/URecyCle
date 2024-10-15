@@ -46,6 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (role == 'admin') {
           final adminProvider = Provider.of<AdminProvider>(context, listen: false);
           await adminProvider.fetchAdminData();
+          await adminProvider.fetchDisposalData();
 
           showDialog(
             context: context,

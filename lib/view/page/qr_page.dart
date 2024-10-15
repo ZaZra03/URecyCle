@@ -86,6 +86,7 @@ class _QRScannerState extends State<QRScanner> {
   }
 
 
+
   Future<void> _showRewardDetails(BuildContext context, String name, int points) {
     return showDialog(
       context: context,
