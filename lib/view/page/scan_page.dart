@@ -1,22 +1,16 @@
-// Flutter packages
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-
-// Third-party packages
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
-import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:image/image.dart' as img;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
-
-// Local packages
-import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
 import 'package:urecycle_app/services/transaction_service.dart';
 import 'package:urecycle_app/view/widget/loading_widget.dart';
 import '../../provider/user_provider.dart';
+import '../../constants.dart';
 import '../screen/user_screen.dart';
 
 class Scan extends StatefulWidget {
@@ -28,15 +22,23 @@ class Scan extends StatefulWidget {
 
 class _ScanState extends State<Scan> {
   CameraController? _cameraController;
+  Interpreter? _interpreter;
+  final _inputSize = 224;
+  List<String> _labels = [];
   String _classificationResult = '';
   bool _isProcessing = true;
-  ImageLabeler? _imageLabeler;
+  // bool _isCameraInitialized = false;
+  int? _classificationIndex;
 
   @override
   void initState() {
     super.initState();
+    print("InitState");
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("Calling Methods");
       _initializeCamera();
+      _loadModel();
+      _loadLabels();
       _initializeUserProvider();
     });
   }
@@ -48,25 +50,11 @@ class _ScanState extends State<Scan> {
     }
   }
 
-  Future<String> getModelPath(String asset) async {
-    final path = '${(await getApplicationSupportDirectory()).path}/$asset';
-    await Directory(p.dirname(path)).create(recursive: true);
-    final file = File(path);
-    if (!await file.exists()) {
-      final byteData = await rootBundle.load(asset);
-      await file.writeAsBytes(byteData.buffer
-          .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
-    }
-    return file.path;
-  }
-
-  // Commented out since the label is not being used
-  // Future<List<String>> loadLabels() async {
-  //   final labelData = await rootBundle.loadString('assets/mobilenetv3.txt');
-  //   return labelData.split('\n');
-  // }
-
   Future<void> _initializeCamera() async {
+    print("Initializing Scan Camera");
+    // print(_isCameraInitialized);
+    // if (_isCameraInitialized) return;
+
     final cameras = await availableCameras();
     _cameraController = CameraController(
       cameras.first,
@@ -74,7 +62,49 @@ class _ScanState extends State<Scan> {
       enableAudio: false,
     );
     await _cameraController?.initialize();
+    // if (mounted) {
+    //   setState(() {
+    //     _isCameraInitialized = true;
+    //   });
+    // }
+
     _takePictureAndProcess();
+  }
+
+  Future<void> _loadModel() async {
+    try {
+      _interpreter = await Interpreter.fromAsset('assets/mobilenetv2_uint8.tflite');
+      print('Model loaded successfully');
+    } catch (e) {
+      print('Error loading model: $e');
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Model Loading Error'),
+            content: const Text('Unable to load the model. Please ensure that the file is correctly placed in the assets directory.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadLabels() async {
+    try {
+      final labelsData = await rootBundle.loadString('assets/mobilenetv3.txt');
+      setState(() {
+        _labels = labelsData.split('\n').where((label) => label.isNotEmpty).toList();
+      });
+      print('Labels loaded successfully');
+    } catch (e) {
+      print('Error loading labels: $e');
+    }
   }
 
   Future<void> _takePictureAndProcess() async {
@@ -87,87 +117,123 @@ class _ScanState extends State<Scan> {
 
       if (pickedFile == null) {
         print('No image selected.');
-        setState(() {
-          _isProcessing = false;
-          _classificationResult = 'No image selected.';
-        });
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+            _classificationResult = 'No image selected.';
+          });
+        }
         return;
       }
 
-      // Set up model path and options
-      final modelPath = await getModelPath('assets/2.tflite');
-      final options = LocalLabelerOptions(
-        confidenceThreshold: 0.5,
-        modelPath: modelPath,
-      );
-      _imageLabeler = ImageLabeler(options: options);
+      final bytes = await pickedFile.readAsBytes();
+      final processedImage = _preprocessImage(bytes);
+      final output = _runInference(processedImage);
+      int maxScore = output.reduce((a, b) => a > b ? a : b);
+      int maxIndex = output.indexWhere((element) => element == maxScore);
+      print(maxScore);
+      print(maxIndex);
 
-      final inputImage = InputImage.fromFilePath(pickedFile.path);
+      for (int i = 0; i < output.length; i++) {
+        print('${_labels[i]}: ${output[i]}');
+      }
 
-      await _imageLabeler!.processImage(inputImage).then((labels) async {
-        // Labels handling is commented out since label.txt is not used
-        // final loadedLabels = await loadLabels();
-        if (labels.isNotEmpty) {
-          final topLabel = labels.first;
-          final maxScore = topLabel.confidence;
-          final label = topLabel.label;
-          // final labelIndex = topLabel.index;
-          // final label = loadedLabels[labelIndex];
 
-          print("Object detected is $label");
-          print("Max Score is $maxScore");
+      if (mounted) {
+        if (maxScore <= 0.5) {
+          // Show the "Unknown" result if the confidence score is not greater than 0.65
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
+          );
+        } else {
+          setState(() {
+            _classificationResult = _labels[maxIndex];
+            _classificationIndex = maxIndex;
+          });
 
-          if (maxScore <= 0.5) {
+          // Handle points, navigation, etc., only if it's a valid classification
+          if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 22) {
+
+
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
+              MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
             );
           } else {
-            setState(() {
-              _classificationResult = label; // Assuming you handle without a label
-            });
-
-            if (_classificationResult.isNotEmpty) {
-              // await LeaderboardService().addPointsToUser(user.studentNumber);
-              // await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
-              // await userProvider.fetchUserData();
-              // await userProvider.fetchTransactions();
-              // await userProvider.fetchTotalDisposals();
-
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
-              );
-            }
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
+            );
           }
         }
-      }).catchError((e) {
-        print('Error processing image: $e');
+      }
+    } catch (e) {
+      print('Error: $e');
+      if (mounted) {
         setState(() {
           _classificationResult = 'Error occurred while processing.';
         });
-      });
-    } catch (e) {
-      print('Error: $e');
-      setState(() {
-        _classificationResult = 'Error occurred while processing.';
-      });
+      }
     } finally {
-      setState(() {
-        _isProcessing = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
+
+// Resize and convert the image to Uint8List
+  Uint8List _preprocessImage(Uint8List imageData) {
+    print('Preprocessing image...');
+
+    // Decode the image to an Image object
+    img.Image image = img.decodeImage(imageData)!;
+
+    // Resize the image to the model's expected input size (e.g., 224x224)
+    img.Image resizedImage = img.copyResize(image, width: _inputSize, height: _inputSize);
+
+    // Convert the resized image to raw RGB pixel data in Uint8List format
+    var buffer = Uint8List(_inputSize * _inputSize * 3);  // 224 * 224 * 3 (for RGB)
+    var bufferIndex = 0;
+
+    for (int y = 0; y < _inputSize; y++) {
+      for (int x = 0; x < _inputSize; x++) {
+        int pixel = resizedImage.getPixel(x, y);
+        buffer[bufferIndex++] = img.getRed(pixel);   // Red channel
+        buffer[bufferIndex++] = img.getGreen(pixel); // Green channel
+        buffer[bufferIndex++] = img.getBlue(pixel);  // Blue channel
+      }
+    }
+
+    print('Image converted to raw RGB Uint8List.');
+    return buffer;  // Return raw pixel data as Uint8List
+  }
+
+
+// Run inference using the Uint8List image data
+  List<int> _runInference(Uint8List inputImage) {
+    print('Running model inference...');
+
+    var inputShape = [1, _inputSize, _inputSize, 3];
+
+    // Pass the Uint8List directly as input
+    var output = List<int>.filled(23, 0).reshape([1, 23]);  // Adjust to the output size of your model
+
+    // Run inference
+    _interpreter?.run(inputImage.reshape(inputShape), output);
+
+    print('Inference complete. Output: $output');
+    return output[0];
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
     return _isProcessing || _cameraController == null || !_cameraController!.value.isInitialized
-        ? const LoadingPage()
+        ? const LoadingPage()  // Show loading while processing or initializing
         : Scaffold(
       body: Center(
         child: CameraPreview(_cameraController!),
@@ -179,7 +245,7 @@ class _ScanState extends State<Scan> {
   void dispose() {
     _isProcessing = false;
     _cameraController?.dispose();
-    _imageLabeler?.close();
+    _interpreter?.close();
     super.dispose();
   }
 }
@@ -240,7 +306,7 @@ class Trash extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const Scan()),
+                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
                           (Route<dynamic> route) => false,
                     );
                   },
@@ -350,7 +416,7 @@ class Unknown extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const Scan()),
+                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
                           (Route<dynamic> route) => false,
                     );
                   },
@@ -460,7 +526,7 @@ class Recycle extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const Scan()),
+                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
                           (Route<dynamic> route) => false,
                     );
                   },
@@ -513,4 +579,3 @@ class Recycle extends StatelessWidget {
     );
   }
 }
-
