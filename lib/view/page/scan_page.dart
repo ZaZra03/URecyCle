@@ -127,12 +127,12 @@ class _ScanState extends State<Scan> {
               _classificationResult = label; // Assuming you handle without a label
             });
 
-            if (user != null && _classificationResult.isNotEmpty) {
-              await LeaderboardService().addPointsToUser(user.studentNumber);
-              await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
-              await userProvider.fetchUserData();
-              await userProvider.fetchTransactions();
-              await userProvider.fetchTotalDisposals();
+            if (_classificationResult.isNotEmpty) {
+              // await LeaderboardService().addPointsToUser(user.studentNumber);
+              // await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
+              // await userProvider.fetchUserData();
+              // await userProvider.fetchTransactions();
+              // await userProvider.fetchTotalDisposals();
 
               Navigator.push(
                 context,
@@ -240,7 +240,7 @@ class Trash extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
+                      MaterialPageRoute(builder: (context) => const Scan()),
                           (Route<dynamic> route) => false,
                     );
                   },
@@ -350,7 +350,7 @@ class Unknown extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
+                      MaterialPageRoute(builder: (context) => const Scan()),
                           (Route<dynamic> route) => false,
                     );
                   },
@@ -460,7 +460,7 @@ class Recycle extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
+                      MaterialPageRoute(builder: (context) => const Scan()),
                           (Route<dynamic> route) => false,
                     );
                   },

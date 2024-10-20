@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:urecycle_app/provider/admin_provider.dart';
 import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/services/firebase_service.dart';
+import 'package:urecycle_app/view/page/scan_page.dart';
 import 'package:urecycle_app/view/screen/admin_screen.dart';
 import 'package:urecycle_app/view/screen/user_screen.dart';
 import 'model/leaderboard_model_hive.dart';
@@ -86,11 +87,12 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         // Navigate based on login state and role
-        home: isLoggedIn
-            ? (role == 'admin'
-            ? const AdminScreen(role: 'admin')
-            : const UserScreen(role: 'user'))
-            : const LoginScreen(),
+        // home: isLoggedIn
+        //     ? (role == 'admin'
+        //     ? const AdminScreen(role: 'admin')
+        //     : const UserScreen(role: 'user'))
+        //     : const LoginScreen(),
+        home: const Scan(),
       ),
     );
   }
