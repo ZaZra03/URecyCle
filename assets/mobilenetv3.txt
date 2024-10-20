@@ -1,0 +1,8 @@
+cardboard
+electronic
+glass
+metal
+organic
+paper
+plastic
+trash
