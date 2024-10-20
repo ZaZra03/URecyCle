@@ -39,6 +39,11 @@ android {
         versionName flutterVersionName
     }
 
+    aaptOptions {
+        noCompress "tflite"
+        // or noCompress "lite"
+    }
+
     buildTypes {
         release {
             signingConfig signingConfigs.debug

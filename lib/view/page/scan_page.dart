@@ -1,16 +1,22 @@
-import 'dart:typed_data';
-import 'package:camera/camera.dart';
+// Flutter packages
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:tflite_flutter/tflite_flutter.dart';
-import 'package:image/image.dart' as img;
-import 'package:flutter/services.dart' show rootBundle;
+
+// Third-party packages
+import 'package:camera/camera.dart';
+import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+
+// Local packages
+import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
 import 'package:urecycle_app/services/transaction_service.dart';
 import 'package:urecycle_app/view/widget/loading_widget.dart';
 import '../../provider/user_provider.dart';
-import '../../constants.dart';
 import '../screen/user_screen.dart';
 
 class Scan extends StatefulWidget {
@@ -22,23 +28,15 @@ class Scan extends StatefulWidget {
 
 class _ScanState extends State<Scan> {
   CameraController? _cameraController;
-  Interpreter? _interpreter;
-  final _inputSize = 224;
-  List<String> _labels = [];
   String _classificationResult = '';
   bool _isProcessing = true;
-  // bool _isCameraInitialized = false;
-  int? _classificationIndex;
+  ImageLabeler? _imageLabeler;
 
   @override
   void initState() {
     super.initState();
-    print("InitState");
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      print("Calling Methods");
       _initializeCamera();
-      _loadModel();
-      _loadLabels();
       _initializeUserProvider();
     });
   }
@@ -50,11 +48,25 @@ class _ScanState extends State<Scan> {
     }
   }
 
-  Future<void> _initializeCamera() async {
-    print("Initializing Scan Camera");
-    // print(_isCameraInitialized);
-    // if (_isCameraInitialized) return;
+  Future<String> getModelPath(String asset) async {
+    final path = '${(await getApplicationSupportDirectory()).path}/$asset';
+    await Directory(p.dirname(path)).create(recursive: true);
+    final file = File(path);
+    if (!await file.exists()) {
+      final byteData = await rootBundle.load(asset);
+      await file.writeAsBytes(byteData.buffer
+          .asUint8List(byteData.offsetInBytes, byteData.lengthInBytes));
+    }
+    return file.path;
+  }
 
+  // Commented out since the label is not being used
+  // Future<List<String>> loadLabels() async {
+  //   final labelData = await rootBundle.loadString('assets/mobilenetv3.txt');
+  //   return labelData.split('\n');
+  // }
+
+  Future<void> _initializeCamera() async {
     final cameras = await availableCameras();
     _cameraController = CameraController(
       cameras.first,
@@ -62,49 +74,7 @@ class _ScanState extends State<Scan> {
       enableAudio: false,
     );
     await _cameraController?.initialize();
-    // if (mounted) {
-    //   setState(() {
-    //     _isCameraInitialized = true;
-    //   });
-    // }
-
     _takePictureAndProcess();
-  }
-
-  Future<void> _loadModel() async {
-    try {
-      _interpreter = await Interpreter.fromAsset('assets/model.tflite');
-      print('Model loaded successfully');
-    } catch (e) {
-      print('Error loading model: $e');
-      if (mounted) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Model Loading Error'),
-            content: const Text('Unable to load the model. Please ensure that the file is correctly placed in the assets directory.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _loadLabels() async {
-    try {
-      final labelsData = await rootBundle.loadString('assets/model.txt');
-      setState(() {
-        _labels = labelsData.split('\n').where((label) => label.isNotEmpty).toList();
-      });
-      print('Labels loaded successfully');
-    } catch (e) {
-      print('Error loading labels: $e');
-    }
   }
 
   Future<void> _takePictureAndProcess() async {
@@ -117,117 +87,87 @@ class _ScanState extends State<Scan> {
 
       if (pickedFile == null) {
         print('No image selected.');
-        if (mounted) {
-          setState(() {
-            _isProcessing = false;
-            _classificationResult = 'No image selected.';
-          });
-        }
+        setState(() {
+          _isProcessing = false;
+          _classificationResult = 'No image selected.';
+        });
         return;
       }
 
-      final bytes = await pickedFile.readAsBytes();
-      final processedImage = _preprocessImage(bytes);
-      Float32List input = _imageToByteListFloat32(processedImage, _inputSize);
+      // Set up model path and options
+      final modelPath = await getModelPath('assets/2.tflite');
+      final options = LocalLabelerOptions(
+        confidenceThreshold: 0.5,
+        modelPath: modelPath,
+      );
+      _imageLabeler = ImageLabeler(options: options);
 
-      final output = _runInference(input);
-      double maxScore = output.reduce((a, b) => a > b ? a : b);
-      int maxIndex = output.indexWhere((element) => element == maxScore);
-      print(maxScore);
+      final inputImage = InputImage.fromFilePath(pickedFile.path);
 
-      if (mounted) {
-        if (maxScore <= 0.5) {
-          // Show the "Unknown" result if the confidence score is not greater than 0.65
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
-          );
-        } else {
-          setState(() {
-            _classificationResult = _labels[maxIndex];
-            _classificationIndex = maxIndex;
-          });
+      await _imageLabeler!.processImage(inputImage).then((labels) async {
+        // Labels handling is commented out since label.txt is not used
+        // final loadedLabels = await loadLabels();
+        if (labels.isNotEmpty) {
+          final topLabel = labels.first;
+          final maxScore = topLabel.confidence;
+          final label = topLabel.label;
+          // final labelIndex = topLabel.index;
+          // final label = loadedLabels[labelIndex];
 
-          // Handle points, navigation, etc., only if it's a valid classification
-          if (user != null && _classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
-            await LeaderboardService().addPointsToUser(user.studentNumber);
-            await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
-            await userProvider.fetchUserData();
-            await userProvider.fetchTransactions();
-            await userProvider.fetchTotalDisposals();
-            print('Points added for recycling.');
+          print("Object detected is $label");
+          print("Max Score is $maxScore");
 
+          if (maxScore <= 0.5) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
+              MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
             );
           } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
-            );
+            setState(() {
+              _classificationResult = label; // Assuming you handle without a label
+            });
+
+            if (user != null && _classificationResult.isNotEmpty) {
+              await LeaderboardService().addPointsToUser(user.studentNumber);
+              await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
+              await userProvider.fetchUserData();
+              await userProvider.fetchTransactions();
+              await userProvider.fetchTotalDisposals();
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
+              );
+            } else {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
+              );
+            }
           }
         }
-      }
-    } catch (e) {
-      print('Error: $e');
-      if (mounted) {
+      }).catchError((e) {
+        print('Error processing image: $e');
         setState(() {
           _classificationResult = 'Error occurred while processing.';
         });
-      }
+      });
+    } catch (e) {
+      print('Error: $e');
+      setState(() {
+        _classificationResult = 'Error occurred while processing.';
+      });
     } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
+      setState(() {
+        _isProcessing = false;
+      });
     }
-  }
-
-
-  img.Image _preprocessImage(Uint8List imageData) {
-    print('Preprocessing image...');
-    img.Image image = img.decodeImage(imageData)!;
-    img.Image resizedImage = img.copyResize(image, width: _inputSize, height: _inputSize);
-    print('Image resized to $_inputSize x $_inputSize');
-    return resizedImage;
-  }
-
-  Float32List _imageToByteListFloat32(img.Image image, int inputSize) {
-    print('Converting image to Float32List...');
-    var buffer = Float32List(inputSize * inputSize * 3);
-    var bufferIndex = 0;
-    for (var y = 0; y < inputSize; y++) {
-      for (var x = 0; x < inputSize; x++) {
-        var pixel = image.getPixel(x, y);
-        buffer[bufferIndex++] = (img.getRed(pixel) / 127.5) - 1.0;
-        buffer[bufferIndex++] = (img.getGreen(pixel) / 127.5) - 1.0;
-        buffer[bufferIndex++] = (img.getBlue(pixel) / 127.5) - 1.0;
-      }
-    }
-    print('Image converted to Float32List.');
-    return buffer;
-  }
-
-  List<double> _runInference(Float32List input) {
-    print('Running model inference...');
-
-    var inputShape = [1, _inputSize, _inputSize, 3];
-    var reshapedInput = input.buffer.asFloat32List(0, input.length);
-
-    var output = List.filled(6, 0.0).reshape([1, 6]);
-
-    _interpreter?.run(reshapedInput.reshape(inputShape), output);
-
-    print('Inference complete. Output: $output');
-    return output[0];
   }
 
   @override
   Widget build(BuildContext context) {
     return _isProcessing || _cameraController == null || !_cameraController!.value.isInitialized
-        ? const LoadingPage()  // Show loading while processing or initializing
+        ? const LoadingPage()
         : Scaffold(
       body: Center(
         child: CameraPreview(_cameraController!),
@@ -239,7 +179,7 @@ class _ScanState extends State<Scan> {
   void dispose() {
     _isProcessing = false;
     _cameraController?.dispose();
-    _interpreter?.close();
+    _imageLabeler?.close();
     super.dispose();
   }
 }
