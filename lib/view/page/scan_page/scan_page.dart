@@ -1,3 +1,5 @@
+import 'dart:isolate';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -9,9 +11,10 @@ import 'package:provider/provider.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
 import 'package:urecycle_app/services/transaction_service.dart';
 import 'package:urecycle_app/view/widget/loading_widget.dart';
-import '../../provider/user_provider.dart';
-import '../../constants.dart';
-import '../screen/user_screen.dart';
+import '../../../provider/user_provider.dart';
+import '../../../constants.dart';
+import '../../screen/user_screen.dart';
+import 'isolate_inference.dart';
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
@@ -27,7 +30,6 @@ class _ScanState extends State<Scan> {
   List<String> _labels = [];
   String _classificationResult = '';
   bool _isProcessing = true;
-  // bool _isCameraInitialized = false;
   int? _classificationIndex;
 
   @override
@@ -52,9 +54,6 @@ class _ScanState extends State<Scan> {
 
   Future<void> _initializeCamera() async {
     print("Initializing Scan Camera");
-    // print(_isCameraInitialized);
-    // if (_isCameraInitialized) return;
-
     final cameras = await availableCameras();
     _cameraController = CameraController(
       cameras.first,
@@ -62,12 +61,6 @@ class _ScanState extends State<Scan> {
       enableAudio: false,
     );
     await _cameraController?.initialize();
-    // if (mounted) {
-    //   setState(() {
-    //     _isCameraInitialized = true;
-    //   });
-    // }
-
     _takePictureAndProcess();
   }
 
@@ -108,127 +101,98 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> _takePictureAndProcess() async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final user = userProvider.user;
-
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.camera);
 
       if (pickedFile == null) {
         print('No image selected.');
-        if (mounted) {
-          setState(() {
-            _isProcessing = false;
-            _classificationResult = 'No image selected.';
-          });
-        }
+        setState(() {
+          _isProcessing = false;
+          _classificationResult = 'No image selected.';
+        });
         return;
       }
 
       final bytes = await pickedFile.readAsBytes();
       final processedImage = _preprocessImage(bytes);
-      final output = _runInference(processedImage);
-      int maxScore = output.reduce((a, b) => a > b ? a : b);
-      int maxIndex = output.indexWhere((element) => element == maxScore);
-      print(maxScore);
-      print(maxIndex);
 
-      for (int i = 0; i < output.length; i++) {
-        print('${_labels[i]}: ${output[i]}');
-      }
-
-
-      if (mounted) {
-        if (maxScore <= 0.5) {
-          // Show the "Unknown" result if the confidence score is not greater than 0.65
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
-          );
-        } else {
-          setState(() {
-            _classificationResult = _labels[maxIndex];
-            _classificationIndex = maxIndex;
-          });
-
-          // Handle points, navigation, etc., only if it's a valid classification
-          if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 22) {
-
-
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
-            );
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
-            );
-          }
-        }
-      }
+      runIsolatedInference(null, processedImage, _interpreter!.address, [_inputSize, _inputSize, 3], _inputSize);
     } catch (e) {
       print('Error: $e');
-      if (mounted) {
-        setState(() {
-          _classificationResult = 'Error occurred while processing.';
-        });
-      }
+      setState(() {
+        _classificationResult = 'Error occurred while processing.';
+      });
     } finally {
-      if (mounted) {
-        setState(() {
-          _isProcessing = false;
-        });
-      }
+      setState(() {
+        _isProcessing = false;
+      });
     }
   }
 
-// Resize and convert the image to Uint8List
-  Uint8List _preprocessImage(Uint8List imageData) {
-    print('Preprocessing image...');
-
-    // Decode the image to an Image object
+  img.Image _preprocessImage(Uint8List imageData) {
     img.Image image = img.decodeImage(imageData)!;
+    return img.copyResize(image, width: _inputSize, height: _inputSize);
+  }
 
-    // Resize the image to the model's expected input size (e.g., 224x224)
-    img.Image resizedImage = img.copyResize(image, width: _inputSize, height: _inputSize);
+  // Softmax function to normalize the scores
+  List<double> softmax(List<int> scores) {
+    double maxScore = scores.reduce((a, b) => a > b ? a : b).toDouble();
+    List<double> expScores = scores.map((score) => exp(score - maxScore)).toList();
+    double sumExpScores = expScores.reduce((a, b) => a + b);
+    return expScores.map((score) => score / sumExpScores).toList();
+  }
 
-    // Convert the resized image to raw RGB pixel data in Uint8List format
-    var buffer = Uint8List(_inputSize * _inputSize * 3);  // 224 * 224 * 3 (for RGB)
-    var bufferIndex = 0;
+  void runIsolatedInference(CameraImage? cameraImage, img.Image? stillImage, int interpreterAddress, List<int> inputShape, int inputSize) async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.user;
 
-    for (int y = 0; y < _inputSize; y++) {
-      for (int x = 0; x < _inputSize; x++) {
-        int pixel = resizedImage.getPixel(x, y);
-        buffer[bufferIndex++] = img.getRed(pixel);   // Red channel
-        buffer[bufferIndex++] = img.getGreen(pixel); // Green channel
-        buffer[bufferIndex++] = img.getBlue(pixel);  // Blue channel
+    final inference = IsolateInference();
+    await inference.start();
+
+    final isolateModel = IsolateModel(cameraImage, stillImage, interpreterAddress, inputShape, inputSize);
+    final responsePort = ReceivePort();
+    isolateModel.responsePort = responsePort.sendPort;
+
+    inference.sendPort.send(isolateModel);
+
+    final result = await responsePort.first;
+    List<int> scores = List<int>.from(result);
+    print(scores);
+
+    // Normalize scores using softmax
+    List<double> probabilities = softmax(scores);
+    print(probabilities);
+
+    double maxScore = probabilities.reduce((a, b) => a > b ? a : b);
+    int maxIndex = probabilities.indexWhere((element) => element == maxScore);
+    print(maxIndex);
+
+    if (mounted) {
+      setState(() {
+        if (maxScore <= 0.5) { // Adjust threshold based on your use case
+          _classificationResult = 'Unknown';
+        } else {
+          _classificationResult = _labels[maxIndex];
+          _classificationIndex = maxIndex;
+        }
+      });
+
+      if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
+        );
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
+        );
       }
     }
 
-    print('Image converted to raw RGB Uint8List.');
-    return buffer;  // Return raw pixel data as Uint8List
+    await inference.close();
   }
-
-
-// Run inference using the Uint8List image data
-  List<int> _runInference(Uint8List inputImage) {
-    print('Running model inference...');
-
-    var inputShape = [1, _inputSize, _inputSize, 3];
-
-    // Pass the Uint8List directly as input
-    var output = List<int>.filled(23, 0).reshape([1, 23]);  // Adjust to the output size of your model
-
-    // Run inference
-    _interpreter?.run(inputImage.reshape(inputShape), output);
-
-    print('Inference complete. Output: $output');
-    return output[0];
-  }
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -249,6 +213,7 @@ class _ScanState extends State<Scan> {
     super.dispose();
   }
 }
+
 
 class Trash extends StatelessWidget {
   final String result;

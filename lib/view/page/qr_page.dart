@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:urecycle_app/view/page/scan_page.dart';
+import 'package:urecycle_app/view/page/scan_page/scan_page.dart';
 import '../../services/leaderboard_service.dart';
 
 class QRScanner extends StatefulWidget {
