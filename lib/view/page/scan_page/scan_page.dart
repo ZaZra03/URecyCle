@@ -3,25 +3,24 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:pytorch_lite/pytorch_lite.dart';
 import 'package:camera/camera.dart';
 import 'package:provider/provider.dart';
-import 'package:pytorch_lite/pigeon.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/widget/loading_widget.dart';
 import '../../../provider/user_provider.dart';
 import '../../screen/user_screen.dart';
-import 'pytorch_lite_model.dart';
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
 
   @override
-  State createState() => _ScanState();
+  State<Scan> createState() => _ScanState();
 }
 
 class _ScanState extends State<Scan> {
   CameraController? _cameraController;
-  String _classificationResult = '';
+  late String _classificationResult;
   bool _isProcessing = true;
   ClassificationModel? _classificationModel;
 
@@ -50,11 +49,11 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> _loadModel() async {
-    String pathImageModel = "assets/models/efficientnet_lite0_quantized.pt";
+    const String modelPath = "assets/models/efficientnet_lite0_quantized.pt";
     try {
       _classificationModel = await PytorchLite.loadClassificationModel(
-        pathImageModel,
-        224, 224,
+        modelPath,
+        224, 224, // This line has an issue
         labelPath: "assets/labels/model.txt",
       );
     } on PlatformException {
@@ -86,6 +85,7 @@ class _ScanState extends State<Scan> {
     try {
       final imageBytes = await File(pickedFile.path).readAsBytes();
       _classificationResult = await _getClassificationResult(imageBytes);
+      print(_classificationResult);
       _navigateToRecycleScreen();
     } catch (e) {
       _setProcessingState('Error during processing: $e');
@@ -100,8 +100,15 @@ class _ScanState extends State<Scan> {
   }
 
   Future<String> _getClassificationResult(Uint8List imageBytes) async {
-    final result = await _classificationModel!.getImagePredictionResult(imageBytes);
-    return result['label']; // Assuming your result has a 'label' key
+    // Define normalization parameters
+    final mean = [0.485, 0.456, 0.406];
+    final std = [0.229, 0.224, 0.225];
+
+    // Get prediction with normalization
+    final result = await _classificationModel!.getImagePrediction(imageBytes, mean: mean, std: std);
+
+    print(result);
+    return result;
   }
 
   void _navigateToRecycleScreen() {
