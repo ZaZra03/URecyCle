@@ -73,6 +73,7 @@ class _ScanState extends State<Scan> {
     _takePictureAndProcess();
   }
 
+  //Loading the model 
   Future<void> _loadModel() async {
     try {
       _interpreter = await Interpreter.fromAsset('assets/models/mobilenetv2_uint8_with_metadata.tflite');
