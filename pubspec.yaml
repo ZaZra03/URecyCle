@@ -55,16 +55,5 @@ flutter:
     - assets/icon/logo.png
     - assets/images/SGD_12.png
     - assets/images/MNV.jpg
-    - assets/models/model.tflite
-    - assets/labels/model.txt
-    - assets/labels/classes.txt
-    - assets/models/1.tflite
-    - assets/models/2.tflite
-    - assets/models/mobilenetv3.tflite
-    - assets/labels/mobilenetv3.txt
-    - assets/models/v3-small_224_1.0_uint8.tflite
-    - assets/models/mobilenetv2_uint8.tflite
-    - assets/models/mobilenetv2_uint8_with_metadata.tflite
-    - assets/models/efficientnet_lite0_quantized.pt
-    - assets/models/model(1).pt
-    - assets/models/trashnet_quantized_model_uint8.tflite
+    - assets/models/
+    - assets/labels/
