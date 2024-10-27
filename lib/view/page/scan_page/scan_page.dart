@@ -1,148 +1,265 @@
-import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:pytorch_lite/pytorch_lite.dart';
 import 'package:camera/camera.dart';
+import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:tflite_flutter/tflite_flutter.dart';
+import 'package:tflite_flutter_helper_plus/tflite_flutter_helper_plus.dart';
+import 'package:image/image.dart' as img;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:provider/provider.dart';
-import 'package:urecycle_app/constants.dart';
+import 'package:urecycle_app/services/leaderboard_service.dart';
+import 'package:urecycle_app/services/transaction_service.dart';
 import 'package:urecycle_app/view/widget/loading_widget.dart';
 import '../../../provider/user_provider.dart';
+import '../../../constants.dart';
 import '../../screen/user_screen.dart';
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
 
   @override
-  State<Scan> createState() => _ScanState();
+  State createState() => _ScanState();
 }
 
 class _ScanState extends State<Scan> {
   CameraController? _cameraController;
-  late String _classificationResult;
+  Interpreter? _interpreter;
+  IsolateInterpreter?  _isolateInterpreter;
+  final _inputSize = 224;
+  List<String> _labels = [];
+  String _classificationResult = '';
   bool _isProcessing = true;
-  ClassificationModel? _classificationModel;
+  // bool _isCameraInitialized = false;
+  int? _classificationIndex;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await _initializeComponents();
+    print("InitState");
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      print("Calling Methods");
+      _initializeCamera();
+      _loadModel();
+      _loadLabels();
+      // _initializeUserProvider();
     });
   }
 
-  Future<void> _initializeComponents() async {
-    await Future.wait([
-      _initializeCamera(),
-      _initializeUserProvider(),
-      _loadModel(),
-    ]);
-    await _takePictureAndProcess();
-  }
+  // void _initializeUserProvider() {
+  //   final userProvider = Provider.of<UserProvider>(context, listen: false);
+  //   if (userProvider.user == null || userProvider.lbUser == null) {
+  //     userProvider.fetchUserData();
+  //   }
+  // }
 
-  Future<void> _initializeUserProvider() async {
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (userProvider.user == null || userProvider.lbUser == null) {
-      await userProvider.fetchUserData();
-    }
+  Future<void> _initializeCamera() async {
+    print("Initializing Scan Camera");
+    // print(_isCameraInitialized);
+    // if (_isCameraInitialized) return;
+
+    final cameras = await availableCameras();
+    _cameraController = CameraController(
+      cameras.first,
+      ResolutionPreset.high,
+      enableAudio: false,
+    );
+    await _cameraController?.initialize();
+    // if (mounted) {
+    //   setState(() {
+    //     _isCameraInitialized = true;
+    //   });
+    // }
+
+    _takePictureAndProcess();
   }
 
   Future<void> _loadModel() async {
-    const String modelPath = "assets/models/efficientnet_lite0_quantized.pt";
     try {
-      _classificationModel = await PytorchLite.loadClassificationModel(
-        modelPath,
-        224, 224, // This line has an issue
-        labelPath: "assets/labels/model.txt",
-      );
-    } on PlatformException {
-      print("Model loading is only supported on Android.");
+      _interpreter = await Interpreter.fromAsset('assets/models/mobilenetv2_uint8_with_metadata.tflite');
+      _isolateInterpreter = await IsolateInterpreter.create(address: _interpreter!.address);
+      print('Model loaded successfully');
+    } catch (e) {
+      print('Error loading model: $e');
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Model Loading Error'),
+            content: const Text('Unable to load the model. Please ensure that the file is correctly placed in the assets directory.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     }
   }
 
-  Future<void> _initializeCamera() async {
+  Future<void> _loadLabels() async {
     try {
-      final cameras = await availableCameras();
-      _cameraController = CameraController(
-        cameras.first,
-        ResolutionPreset.high,
-        enableAudio: false,
-      );
-      await _cameraController?.initialize();
+      final labelsData = await rootBundle.loadString('assets/labels/mobilenetv3.txt');
+      setState(() {
+        _labels = labelsData.split('\n').where((label) => label.isNotEmpty).toList();
+      });
+      print('Labels loaded successfully');
     } catch (e) {
-      _setProcessingState('Error initializing camera: $e');
+      print('Error loading labels: $e');
     }
   }
 
   Future<void> _takePictureAndProcess() async {
-    final pickedFile = await _pickImage();
-    if (pickedFile == null) {
-      _setProcessingState('No image selected.');
-      return;
-    }
+    // final userProvider = Provider.of<UserProvider>(context, listen: false);
+    // final user = userProvider.user;
 
     try {
-      final imageBytes = await File(pickedFile.path).readAsBytes();
-      _classificationResult = await _getClassificationResult(imageBytes);
-      print(_classificationResult);
-      _navigateToRecycleScreen();
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+
+      if (pickedFile == null) {
+        print('No image selected.');
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+            _classificationResult = 'No image selected.';
+          });
+        }
+        return;
+      }
+
+      final bytes = await pickedFile.readAsBytes();
+
+      // Create the ImageProcessor
+      ImageProcessor imageProcessor = ImageProcessorBuilder()
+          .add(ResizeWithCropOrPadOp(_inputSize, _inputSize))
+          .add(ResizeOp(224, 224, ResizeMethod.nearestneighbour))
+          .add(NormalizeOp.multipleChannels([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]))
+          .build();
+
+      // Decode the image and process it
+      img.Image originalImage = img.decodeImage(bytes)!;
+      TensorImage tensorImage = TensorImage.fromImage(originalImage);
+
+      // Use the ImageProcessor to preprocess the image
+      tensorImage = imageProcessor.process(tensorImage);
+
+      // Convert the processed TensorImage to a Float32List for model input
+      Uint8List input = tensorImage.getBuffer().asUint8List();
+
+      final output = _runInference(input);
+      double maxScore = output.reduce((a, b) => a > b ? a : b);
+      int maxIndex = output.indexWhere((element) => element == maxScore);
+      print(maxScore);
+
+      if (mounted) {
+        if (maxScore <= 0.5) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
+          );
+        } else {
+          setState(() {
+            _classificationResult = _labels[maxIndex];
+            _classificationIndex = maxIndex;
+          });
+
+          // Handle points, navigation, etc.
+          // if (user != null && _classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 4) {
+          if (_classificationIndex != null && _classificationIndex! >= 0 && _classificationIndex! <= 21) {
+            // await LeaderboardService().addPointsToUser(user.studentNumber);
+            // await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
+            // await userProvider.fetchUserData();
+            // await userProvider.fetchTransactions();
+            // await userProvider.fetchTotalDisposals();
+            // print('Points added for recycling.');
+
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
+            );
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
+            );
+          }
+        }
+      }
     } catch (e) {
-      _setProcessingState('Error during processing: $e');
+      print('Error: $e');
+      if (mounted) {
+        setState(() {
+          _classificationResult = 'Error occurred while processing.';
+        });
+      }
     } finally {
-      _setProcessingState('');
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
+      }
     }
   }
 
-  Future<XFile?> _pickImage() async {
-    final picker = ImagePicker();
-    return await picker.pickImage(source: ImageSource.camera);
-  }
 
-  Future<String> _getClassificationResult(Uint8List imageBytes) async {
-    // Define normalization parameters
-    final mean = [0.485, 0.456, 0.406];
-    final std = [0.229, 0.224, 0.225];
+  // img.Image _preprocessImage(Uint8List imageData) {
+  //   print('Preprocessing image...');
+  //   img.Image image = img.decodeImage(imageData)!;
+  //   img.Image resizedImage = img.copyResize(image, width: _inputSize, height: _inputSize);
+  //   print('Image resized to $_inputSize x $_inputSize');
+  //   return resizedImage;
+  // }
 
-    // Get prediction with normalization
-    final result = await _classificationModel!.getImagePrediction(imageBytes, mean: mean, std: std);
+  // Float32List _imageToByteListFloat32(img.Image image, int inputSize) {
+  //   print('Converting image to Float32List...');
+  //   var buffer = Float32List(inputSize * inputSize * 3);
+  //   var bufferIndex = 0;
+  //   for (var y = 0; y < inputSize; y++) {
+  //     for (var x = 0; x < inputSize; x++) {
+  //       var pixel = image.getPixel(x, y);
+  //       buffer[bufferIndex++] = (img.getRed(pixel) / 127.5) - 1.0;
+  //       buffer[bufferIndex++] = (img.getGreen(pixel) / 127.5) - 1.0;
+  //       buffer[bufferIndex++] = (img.getBlue(pixel) / 127.5) - 1.0;
+  //     }
+  //   }
+  //   print('Image converted to Float32List.');
+  //   return buffer;
+  // }
 
-    print(result);
-    return result;
-  }
+  List<double> _runInference(Uint8List  input) {
+    print('Running model inference...');
 
-  void _navigateToRecycleScreen() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => Recycle(result: _classificationResult),
-      ),
-    );
-  }
+    var inputShape = [1, _inputSize, _inputSize, 3];
+    var output = List.filled(22, 0.0).reshape([1, 22]);
 
-  void _setProcessingState(String message) {
-    setState(() {
-      _isProcessing = false;
-      _classificationResult = message;
-    });
+    _isolateInterpreter?.run(inputShape, output);
+
+    print('Inference complete. Output: $output');
+    return output[0];
   }
 
   @override
   Widget build(BuildContext context) {
     return _isProcessing || _cameraController == null || !_cameraController!.value.isInitialized
-        ? const LoadingPage()
+        ? const LoadingPage()  // Show loading while processing or initializing
         : Scaffold(
-      body: Center(child: CameraPreview(_cameraController!)),
+      body: Center(
+        child: CameraPreview(_cameraController!),
+      ),
     );
   }
 
   @override
   void dispose() {
+    _isProcessing = false;
     _cameraController?.dispose();
+    _interpreter?.close();
     super.dispose();
   }
 }
-
+ 
 class Trash extends StatelessWidget {
   final String result;
 

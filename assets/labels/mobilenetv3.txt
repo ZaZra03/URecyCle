@@ -1,13 +1,12 @@
 aluminum_food_cans
 aluminum_soda_cans
 cardboard_boxes
-cardboard_packaging
 coffee_grounds
 disposable_plastic_cutlery
 eggshells
+electronics
 food_waste
 glass_beverage_bottles
-glass_cosmetic_containers
 glass_food_jars
 paper
 paper_cups
