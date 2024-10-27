@@ -65,3 +65,4 @@ flutter:
     - assets/models/mobilenetv2_uint8.tflite
     - assets/models/mobilenetv2_uint8_with_metadata.tflite
     - assets/models/efficientnet_lite0_quantized.pt
+    - assets/models/trashnet_quantized_model_uint8.tflite
