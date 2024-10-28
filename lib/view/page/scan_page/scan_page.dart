@@ -25,7 +25,7 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> loadModel() async {
-    const pathImageModel = "assets/models/best_skipped_model.pt";
+    const pathImageModel = "assets/models/best_model.pt";
     try {
       _imageModel = await PytorchLite.loadClassificationModel(
         pathImageModel, 224, 224, 6,
@@ -53,11 +53,9 @@ class _ScanState extends State<Scan> {
       final stopwatch = Stopwatch()..start();
       List<double?>? predictionList = await _imageModel!.getImagePredictionList(
         imageBytes,
-        preProcessingMethod: PreProcessingMethod.imageLib,
       );
       classificationInferenceTime = stopwatch.elapsed;
-
-      // Assuming you want the highest prediction as the result
+      print(predictionList);
       int maxIndex = predictionList.indexWhere((e) => e == predictionList.reduce((a, b) => a! > b! ? a : b));
       classificationResult = maxIndex >= 0 ? "Class $maxIndex" : "N/A";
 
