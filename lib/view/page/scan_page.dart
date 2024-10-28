@@ -1,21 +1,14 @@
-// Flutter packages
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-
-// Third-party packages
-import 'package:camera/camera.dart';
 import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
-
-// Local packages
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
 import 'package:urecycle_app/services/transaction_service.dart';
-import 'package:urecycle_app/view/widget/loading_widget.dart';
 import '../../provider/user_provider.dart';
 import '../screen/user_screen.dart';
 
@@ -27,16 +20,13 @@ class Scan extends StatefulWidget {
 }
 
 class _ScanState extends State<Scan> {
-  CameraController? _cameraController;
   String _classificationResult = '';
-  bool _isProcessing = true;
   ImageLabeler? _imageLabeler;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _initializeCamera();
       _initializeUserProvider();
     });
   }
@@ -60,42 +50,24 @@ class _ScanState extends State<Scan> {
     return file.path;
   }
 
-  // Commented out since the label is not being used
-  // Future<List<String>> loadLabels() async {
-  //   final labelData = await rootBundle.loadString('assets/mobilenetv3.txt');
-  //   return labelData.split('\n');
-  // }
-
-  Future<void> _initializeCamera() async {
-    final cameras = await availableCameras();
-    _cameraController = CameraController(
-      cameras.first,
-      ResolutionPreset.high,
-      enableAudio: false,
-    );
-    await _cameraController?.initialize();
-    _takePictureAndProcess();
-  }
-
-  Future<void> _takePictureAndProcess() async {
+  Future<void> _pickImageAndProcess(ImageSource source) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final user = userProvider.user;
 
     try {
       final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(source: ImageSource.camera);
+      final pickedFile = await picker.pickImage(source: source);
 
       if (pickedFile == null) {
         print('No image selected.');
         setState(() {
-          _isProcessing = false;
           _classificationResult = 'No image selected.';
         });
         return;
       }
 
       // Set up model path and options
-      final modelPath = await getModelPath('assets/2.tflite');
+      final modelPath = await getModelPath('assets/models/trashnet-quantized-metadata.tflite');
       final options = LocalLabelerOptions(
         confidenceThreshold: 0.5,
         modelPath: modelPath,
@@ -105,14 +77,10 @@ class _ScanState extends State<Scan> {
       final inputImage = InputImage.fromFilePath(pickedFile.path);
 
       await _imageLabeler!.processImage(inputImage).then((labels) async {
-        // Labels handling is commented out since label.txt is not used
-        // final loadedLabels = await loadLabels();
         if (labels.isNotEmpty) {
           final topLabel = labels.first;
           final maxScore = topLabel.confidence;
           final label = topLabel.label;
-          // final labelIndex = topLabel.index;
-          // final label = loadedLabels[labelIndex];
 
           print("Object detected is $label");
           print("Max Score is $maxScore");
@@ -124,27 +92,29 @@ class _ScanState extends State<Scan> {
             );
           } else {
             setState(() {
-              _classificationResult = label; // Assuming you handle without a label
+              _classificationResult = label;
             });
 
             if (user != null && _classificationResult.isNotEmpty) {
-              await LeaderboardService().addPointsToUser(user.studentNumber);
-              await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
-              await userProvider.fetchUserData();
-              await userProvider.fetchTransactions();
-              await userProvider.fetchTotalDisposals();
+              if (['Cardboard', 'Glass', 'Metal', 'Paper', 'Plastic'].contains(_classificationResult)) {
+                await LeaderboardService().addPointsToUser(user.studentNumber);
+                await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
 
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
-              );
-            } else {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
-              );
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
+                );
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
+                );
+              }
             }
           }
+          await userProvider.fetchUserData();
+          await userProvider.fetchTransactions();
+          await userProvider.fetchTotalDisposals();
         }
       }).catchError((e) {
         print('Error processing image: $e');
@@ -157,28 +127,35 @@ class _ScanState extends State<Scan> {
       setState(() {
         _classificationResult = 'Error occurred while processing.';
       });
-    } finally {
-      setState(() {
-        _isProcessing = false;
-      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return _isProcessing || _cameraController == null || !_cameraController!.value.isInitialized
-        ? const LoadingPage()
-        : Scaffold(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Scan Item'),
+      ),
       body: Center(
-        child: CameraPreview(_cameraController!),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            ElevatedButton(
+              onPressed: () => _pickImageAndProcess(ImageSource.camera),
+              child: const Text("Capture Image from Camera"),
+            ),
+            ElevatedButton(
+              onPressed: () => _pickImageAndProcess(ImageSource.gallery),
+              child: const Text("Pick Image from Gallery"),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   @override
   void dispose() {
-    _isProcessing = false;
-    _cameraController?.dispose();
     _imageLabeler?.close();
     super.dispose();
   }

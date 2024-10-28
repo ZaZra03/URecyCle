@@ -16,7 +16,7 @@ dependencies:
   shared_preferences: ^2.3.1
   camera: ^0.10.0
   image_picker: ^1.1.2
-  image: ^3.0.0
+  image: ^4.0.15
   tflite_flutter: ^0.11.0
   mobile_scanner: ^5.2.2
   provider: ^6.1.2
@@ -35,7 +35,7 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
-  flutter_launcher_icons: ^0.11.0
+  flutter_launcher_icons: ^0.14.1
   build_runner: ^2.4.11
   hive_generator: ^2.0.1
 
@@ -52,11 +52,5 @@ flutter:
     - assets/icon/logo.png
     - assets/images/SGD_12.png
     - assets/images/MNV.jpg
-    - assets/model.tflite
-    - assets/model.txt
-    - assets/classes.txt
-    - assets/1.tflite
-    - assets/2.tflite
-    - assets/mobilenetv3.tflite
-    - assets/mobilenetv3.txt
-    - assets/v3-small_224_1.0_uint8.tflite
+    - assets/models/
+    - assets/labels/
