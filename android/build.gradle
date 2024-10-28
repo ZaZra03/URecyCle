@@ -1,11 +1,18 @@
 buildscript {
     ext {
         buildToolsVersion = "32.0.0"
-        minSdkVersion = 20
+        minSdkVersion = 21
         compileSdkVersion = 34
         targetSdkVersion = 32
         androidXBrowser = "1.4.0"
         kotlinVersion = "1.8.0"
+    }
+    repositories {  // Add this repositories block here
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.1.0")  // Check that this is compatible
     }
 }
 
@@ -16,6 +23,7 @@ allprojects {
     }
 }
 
+// The rest of the file remains the same
 rootProject.buildDir = "../build"
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"

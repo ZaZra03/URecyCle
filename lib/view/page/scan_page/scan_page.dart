@@ -25,10 +25,10 @@ class _ScanState extends State<Scan> {
   }
 
   Future<void> loadModel() async {
-    const pathImageModel = "assets/models/best_model.pt";
+    const pathImageModel = "assets/models/best_skipped_model.pt";
     try {
       _imageModel = await PytorchLite.loadClassificationModel(
-        pathImageModel, 224, 224,
+        pathImageModel, 224, 224, 6,
         labelPath: "assets/labels/model.txt",
       );
     } catch (e) {
@@ -51,12 +51,19 @@ class _ScanState extends State<Scan> {
 
     try {
       final stopwatch = Stopwatch()..start();
-      final String? result = await _imageModel?.getImagePrediction(imageBytes);
+      List<double?>? predictionList = await _imageModel!.getImagePredictionList(
+        imageBytes,
+        preProcessingMethod: PreProcessingMethod.imageLib,
+      );
       classificationInferenceTime = stopwatch.elapsed;
+
+      // Assuming you want the highest prediction as the result
+      int maxIndex = predictionList.indexWhere((e) => e == predictionList.reduce((a, b) => a! > b! ? a : b));
+      classificationResult = maxIndex >= 0 ? "Class $maxIndex" : "N/A";
 
       setState(() {
         _image = image;
-        classificationResult = result;
+        classificationResult = classificationResult;
       });
     } catch (e) {
       print("Error during classification: $e");
