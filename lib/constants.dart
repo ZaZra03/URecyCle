@@ -14,7 +14,7 @@ class Constants {
   static var gray04Color = const Color(0xFF666666);
 
   //Routes
-  static const url = 'http://192.168.18.10:3000/';
+  static const url = 'https://urecycle-backend.onrender.com/';
   static const register = '${url}register';
   static const login = '${url}login';
   static const leaderboard = '${url}leaderboard';
