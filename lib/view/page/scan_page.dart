@@ -67,7 +67,7 @@ class _ScanState extends State<Scan> {
       }
 
       // Set up model path and options
-      final modelPath = await getModelPath('assets/models/trashnet-quantized-metadata.tflite');
+      final modelPath = await getModelPath('assets/models/quantized_model_uint8.tflite');
       final options = LocalLabelerOptions(
         confidenceThreshold: 0.5,
         modelPath: modelPath,
