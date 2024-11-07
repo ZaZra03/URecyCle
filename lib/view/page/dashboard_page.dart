@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/admin_provider.dart';
-import '../screen/userslist_screen.dart';
-import '../screen/visual_screen.dart';
+import '../screen/admin_screen/userslist_screen.dart';
+import '../screen/admin_screen/visual_screen.dart';
 import '../widget/custom_card.dart';
 import '../screen/register_screen.dart';
 import '../screen/leaderboard_screen.dart';

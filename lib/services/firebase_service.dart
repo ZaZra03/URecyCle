@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../constants.dart';
+import 'auth_service.dart';
 
 class FirebaseApi {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -67,31 +68,57 @@ class FirebaseApi {
   }
 
   Future<List<dynamic>> fetchNotifications(String studentNumber) async {
-    final Uri uri = Uri.parse('${Constants.getNotification}/$studentNumber');
-    final response = await http.get(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-    );
+    try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
 
-    if (response.statusCode == 200) {
-      return json.decode(response.body) as List<dynamic>;
-    } else {
-      throw Exception('Failed to load notifications');
+      final Uri uri = Uri.parse('${Constants.getNotification}/$studentNumber');
+      final response = await http.get(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',  // Added Authorization Bearer token
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body) as List<dynamic>;
+      } else {
+        throw Exception('Failed to load notifications: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching notifications: $e');
     }
   }
 
+  // Delete notification
   Future<void> deleteNotification(String studentNumber, String notificationId) async {
-    final Uri uri = Uri.parse('${Constants.getNotification}/$studentNumber/$notificationId');
-    final response = await http.delete(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-    );
+    try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to delete notification');
+      final Uri uri = Uri.parse('${Constants.getNotification}/$studentNumber/$notificationId');
+      final response = await http.delete(
+        uri,
+        headers: {
+          'Authorization': 'Bearer $token',  // Added Authorization Bearer token
+          'Content-Type': 'application/json',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete notification: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Error deleting notification: $e');
     }
   }
 
+  // Send a notification to a specific user
   Future<void> sendNotification({
     required String fcmToken,
     required String title,
@@ -99,9 +126,17 @@ class FirebaseApi {
     Map<String, String>? data,
   }) async {
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.post(
         Uri.parse(Constants.sendNotification),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer $token',  // Added Authorization Bearer token
+          'Content-Type': 'application/json',
+        },
         body: json.encode({
           'fcmToken': fcmToken,
           'title': title,
@@ -120,15 +155,24 @@ class FirebaseApi {
     }
   }
 
+  // Send notification to all users
   Future<void> sendNotificationToAllUsers({
     required String title,
     required String body,
     Map<String, String>? data,
   }) async {
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.get(
         Uri.parse(Constants.allUsers),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Authorization': 'Bearer $token',  // Added Authorization Bearer token
+          'Content-Type': 'application/json',
+        },
       );
 
       if (response.statusCode == 200) {

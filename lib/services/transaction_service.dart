@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
+import 'package:urecycle_app/services/auth_service.dart';
 
 class TransactionService {
   // API endpoints
@@ -9,9 +10,15 @@ class TransactionService {
   // Create a new transaction
   Future<void> createTransaction(String studentNumber, String wasteType, int pointsEarned) async {
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.post(
         createTransactionUri,
         headers: <String, String>{
+          'Authorization': 'Bearer $token', // Added Authorization Bearer token
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode({
@@ -34,7 +41,18 @@ class TransactionService {
     final Uri studentTransactionsUri = Uri.parse('$createTransactionUri/$studentNumber');
 
     try {
-      final response = await http.get(studentTransactionsUri);
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        studentTransactionsUri,
+        headers: <String, String>{
+          'Authorization': 'Bearer $token', // Added Authorization Bearer token
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
@@ -47,5 +65,3 @@ class TransactionService {
     }
   }
 }
-
-

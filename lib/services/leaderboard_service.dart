@@ -14,9 +14,15 @@ class LeaderboardService {
     print('Leaderboard URL: $leaderboard'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.get(
         leaderboard,
         headers: <String, String>{
+          'Authorization': 'Bearer $token', // Added Authorization Bearer token
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
@@ -42,9 +48,15 @@ class LeaderboardService {
     print('Top 3 URL: $lbTop3'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.get(
         lbTop3,
         headers: <String, String>{
+          'Authorization': 'Bearer $token', // Added Authorization Bearer token
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
@@ -71,9 +83,15 @@ class LeaderboardService {
     print('User URL: $userUri'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.get(
         userUri,
         headers: <String, String>{
+          'Authorization': 'Bearer $token', // Added Authorization Bearer token
           'Content-Type': 'application/json; charset=UTF-8',
         },
       );
@@ -98,25 +116,33 @@ class LeaderboardService {
   }
 
   // Add points to a specific leaderboard entry by student number
-  Future<void> addPointsToUser(String studentNumber) async {
+  Future<void> addPointsToUser(String studentNumber, int pointsToAdd) async {
     final Uri addPointsUri = Uri.parse('${Constants.leaderboard}/$studentNumber/add-points');
     print('Add Points URL: $addPointsUri'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.post(
         addPointsUri,
         headers: <String, String>{
+          'Authorization': 'Bearer $token', // Add Authorization Bearer token
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
-          // Add the fixed points here if required by the backend
+          'pointsToAdd': pointsToAdd, // Passing the points to add to the backend
         }),
       );
 
       print('Add Points Response Status Code: ${response.statusCode}');
       print('Add Points Response Body: ${response.body}');
 
-      if (response.statusCode != 200) {
+      if (response.statusCode == 200) {
+        print('Points added successfully');
+      } else {
         final Map<String, dynamic> errorResponse = jsonDecode(response.body);
         final String errorMessage = errorResponse['error'] ?? 'Failed to add points';
         throw Exception(errorMessage);
@@ -126,14 +152,21 @@ class LeaderboardService {
     }
   }
 
+  // Deduct points from a specific leaderboard entry by student number
   Future<void> deductPointsFromUser(String studentNumber, int pointsToDeduct) async {
     final Uri deductPointsUri = Uri.parse('${Constants.leaderboard}/$studentNumber/deduct-points');
     print('Deduct Points URL: $deductPointsUri'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.post(
         deductPointsUri,
         headers: <String, String>{
+          'Authorization': 'Bearer $token', // Added Authorization Bearer token
           'Content-Type': 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, dynamic>{
@@ -154,6 +187,7 @@ class LeaderboardService {
     }
   }
 
+  // Load user data (combined data from user and leaderboard)
   Future<Map<String, dynamic>> loadUserData() async {
     final LeaderboardService lbService = LeaderboardService();
     final Uri url = Uri.parse(Constants.user);
@@ -174,5 +208,3 @@ class LeaderboardService {
     }
   }
 }
-
-

@@ -10,7 +10,15 @@ import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
 import 'package:urecycle_app/services/transaction_service.dart';
 import '../../provider/user_provider.dart';
-import '../screen/user_screen.dart';
+import '../screen/user_screen/user_screen.dart';
+import '../screen/user_screen/waste_screen/cardboard_screen.dart';
+import '../screen/user_screen/waste_screen/electronics_screen.dart';
+import '../screen/user_screen/waste_screen/glass_screen.dart';
+import '../screen/user_screen/waste_screen/metal_screen.dart';
+import '../screen/user_screen/waste_screen/paper_screen.dart';
+import '../screen/user_screen/waste_screen/plastic_screen.dart';
+import '../screen/user_screen/waste_screen/trash_screen.dart';
+import '../screen/user_screen/waste_screen/unkown_screen.dart';
 
 class Scan extends StatefulWidget {
   const Scan({super.key});
@@ -20,8 +28,40 @@ class Scan extends StatefulWidget {
 }
 
 class _ScanState extends State<Scan> {
-  String _classificationResult = '';
+  late String _classificationResult;
   ImageLabeler? _imageLabeler;
+
+  final Map<String, String> categoryMapping = {
+    'Aluminum Cans': 'Metal',
+    'Cardboard Boxes': 'Cardboard',
+    'Disposable Plastic Cutlery': 'Plastic',
+    'Glass Containers': 'Glass',
+    'Organic Waste': 'Trash',
+    'Paper': 'Paper',
+    'Paper Cups': 'Paper',
+    'Plastic Bags': 'Plastic',
+    'Plastic Bottles': 'Plastic',
+    'Plastic Cups': 'Plastic',
+    'Plastic Food Containers': 'Plastic',
+    'Plastic Straws': 'Plastic',
+    'Styrofoam': 'Trash',
+  };
+
+  final Map<String, int> pointsMapping = {
+    'Aluminum Cans': 15,
+    'Cardboard Boxes': 10,
+    'Disposable Plastic Cutlery': 3,
+    'Glass Containers': 20,
+    'Organic Waste': 0,
+    'Paper': 8,
+    'Paper Cups': 5,
+    'Plastic Bags': 2,
+    'Plastic Bottles': 10,
+    'Plastic Cups': 5,
+    'Plastic Food Containers': 8,
+    'Plastic Straws': 1,
+    'Styrofoam': 0,
+  };
 
   @override
   void initState() {
@@ -81,33 +121,41 @@ class _ScanState extends State<Scan> {
           final topLabel = labels.first;
           final maxScore = topLabel.confidence;
           final label = topLabel.label;
-
+          final confidencePercentage = (maxScore * 100).toStringAsFixed(2);
           print("Object detected is $label");
           print("Max Score is $maxScore");
 
-          if (maxScore <= 0.5) {
+          if (maxScore <= 0.7) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
             );
           } else {
             setState(() {
-              _classificationResult = label;
+              _classificationResult = label.trim();
             });
 
             if (user != null && _classificationResult.isNotEmpty) {
-              if (['Cardboard', 'Glass', 'Metal', 'Paper', 'Plastic'].contains(_classificationResult)) {
-                await LeaderboardService().addPointsToUser(user.studentNumber);
-                await TransactionService().createTransaction(user.studentNumber, _classificationResult, 10);
+              final category = categoryMapping[_classificationResult] ?? _classificationResult;
+              final points = pointsMapping[_classificationResult] ?? 0;
+
+              if (_classificationResult != 'Trash' || _classificationResult != 'Electronics') {
+                await LeaderboardService().addPointsToUser(user.studentNumber, points);
+                await TransactionService().createTransaction(user.studentNumber, category, points);
 
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult)),
+                  MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult, confidencePercentage: confidencePercentage, points: points, category: category,)),
+                );
+              } else if (_classificationResult == 'Electronics') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Electronics(result: _classificationResult, confidencePercentage: confidencePercentage,)),
                 );
               } else {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Trash(result: _classificationResult)),
+                  MaterialPageRoute(builder: (context) => Trash(result: _classificationResult, confidencePercentage: confidencePercentage,)),
                 );
               }
             }
@@ -163,8 +211,9 @@ class _ScanState extends State<Scan> {
 
 class Trash extends StatelessWidget {
   final String result;
+  final String confidencePercentage;
 
-  const Trash({super.key, required this.result});
+  const Trash({super.key, required this.result, required this.confidencePercentage});
 
   @override
   Widget build(BuildContext context) {
@@ -194,6 +243,12 @@ class Trash extends StatelessWidget {
               const SizedBox(height: 10),
               Text(
                 'Scanned Waste: $result',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Confidence: $confidencePercentage%',
                 style: const TextStyle(color: Colors.white, fontSize: 24),
                 textAlign: TextAlign.center,
               ),
@@ -245,7 +300,130 @@ class Trash extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
                   onTap: () {
-                    // Navigate to Learn More page or perform an action
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const TrashScreen()),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                    width: screenWidth * 0.8,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Learn More",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class Electronics extends StatelessWidget {
+  final String result;
+  final String confidencePercentage;
+
+  const Electronics({super.key, required this.result, required this.confidencePercentage});
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    return Scaffold(
+      body: Container(
+        color: const Color(0xFF2E3B55),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(
+                Icons.devices_other_outlined,
+                size: 150,
+                color: Colors.white,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Electronic Waste Disposal Notice',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Scanned Waste: $result',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Confidence: $confidencePercentage%',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Please dispose of electronic waste responsibly.',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+              Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
+                          (Route<dynamic> route) => false,
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
+                    width: screenWidth * 0.8,
+                    alignment: Alignment.center,
+                    child: const Text(
+                      "Go Back",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20), // Add space between buttons
+              Material(
+                elevation: 5,
+                borderRadius: BorderRadius.circular(30),
+                color: Colors.white,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(30),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ElectronicsScreen()),
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
@@ -355,7 +533,10 @@ class Unknown extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
                   onTap: () {
-                    // Navigate to Learn More page or perform an action
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const UnknownScreen()),
+                    );
                   },
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
@@ -383,8 +564,37 @@ class Unknown extends StatelessWidget {
 
 class Recycle extends StatelessWidget {
   final String result;
+  final String category;
+  final String confidencePercentage;
+  final int points;
 
-  const Recycle({super.key, required this.result});
+  const Recycle({
+    super.key,
+    required this.result,
+    required this.category,
+    required this.confidencePercentage,
+    required this.points,
+  });
+
+  void navigateToScreen(BuildContext context, String category) {
+    final screenMapping = {
+      'Cardboard': const CardboardScreen(),
+      'Glass': const GlassScreen(),
+      'Metal': const MetalScreen(),
+      'Paper': const PaperScreen(),
+      'Plastic': const PlasticScreen(),
+    };
+
+    final screen = screenMapping[category];
+    if (screen != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => screen),
+      );
+    } else {
+      print("No screen available for category: $category");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -413,14 +623,20 @@ class Recycle extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                'Scanned Waste: $result(Recyclable)',
+                'Scanned Waste: $result (Recyclable)',
                 style: const TextStyle(color: Colors.white, fontSize: 24),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 10),
-              const Text(
-                'You have received 10 points!',
-                style: TextStyle(
+              Text(
+                'Confidence: $confidencePercentage%',
+                style: const TextStyle(color: Colors.white, fontSize: 24),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'You have received $points points!',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -465,7 +681,7 @@ class Recycle extends StatelessWidget {
                 child: InkWell(
                   borderRadius: BorderRadius.circular(30),
                   onTap: () {
-                    // Navigate to Learn More page or perform an action
+                    navigateToScreen(context, category);
                   },
                   child: Container(
                     padding: const EdgeInsets.fromLTRB(20, 15, 20, 15),
@@ -490,4 +706,5 @@ class Recycle extends StatelessWidget {
     );
   }
 }
+
 
