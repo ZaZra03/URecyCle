@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:urecycle_app/provider/admin_provider.dart';
 import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/services/firebase_service.dart';
+import 'package:urecycle_app/services/hive_service.dart';
 import 'package:urecycle_app/view/screen/admin_screen.dart';
 import 'package:urecycle_app/view/screen/user_screen.dart';
-import 'model/leaderboard_model_hive.dart';
-import 'model/user_model_hive.dart';
+import 'model/hive_model/user_model_hive.dart';
 import 'view/screen/login_screen.dart';
 import 'provider/user_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -21,55 +20,28 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
+  // Initialize Firebase API and Notifications
   final firebaseApi = FirebaseApi();
   await firebaseApi.initNotifications();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Initialize Hive and open boxes
-  final directory = await getApplicationDocumentsDirectory();
-  Hive.init(directory.path);
+  // Initialize HiveService
+  final hiveService = HiveService();
+  await hiveService.init(); // Initialize Hive and open boxes
 
-  // Register Hive adapters for custom data types
-  Hive.registerAdapter(UserModelAdapter());
-  Hive.registerAdapter(LeaderboardEntryAdapter());
-
-  // Try opening Hive boxes and handling potential errors
-  try {
-    await Hive.openBox('userBox');
-    await Hive.openBox('notificationsBox');
-    await Hive.openBox('transactionsBox');
-    await Hive.openBox('disposalBox');
-  } catch (e) {
-    print('Error opening Hive boxes: $e');
-    // Consider showing an error UI or retrying
-  }
-
-  // Retrieve login information from Hive and SharedPreferences
-  final userBox = Hive.box('userBox');
-  bool isLoggedIn = userBox.get('isLoggedIn', defaultValue: false);
-  String role = userBox.get('role', defaultValue: 'user');
-
-  // Check if token exists in SharedPreferences
-  final String? token = await AuthService.getToken();
-  if (token != null) {
-    isLoggedIn = true;
-  }
-
-  runApp(MyApp(firebaseApi: firebaseApi, isLoggedIn: isLoggedIn, role: role));
+  runApp(MyApp(firebaseApi: firebaseApi));
 }
 
 class MyApp extends StatelessWidget {
   final FirebaseApi firebaseApi;
-  final bool isLoggedIn;
-  final String role;
 
   const MyApp({
     super.key,
     required this.firebaseApi,
-    required this.isLoggedIn,
-    required this.role,
   });
 
   @override
@@ -86,11 +58,20 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         // Navigate based on login state and role
-        home: isLoggedIn
-            ? (role == 'admin'
-            ? const AdminScreen(role: 'admin')
-            : const UserScreen(role: 'user'))
-            : const LoginScreen(),
+        home: Builder(builder: (context) {
+          final userBox = HiveService().userBox; // Access the userBox here
+          final user = userBox.get('user'); // Get the user instance
+          print(user);
+
+          // Check if user exists and determine the role
+          if (user == null) {
+            return const LoginScreen(); // No user found
+          } else if (user.role == 'admin') {
+            return const AdminScreen(role: 'admin'); // Admin role
+          } else {
+            return const UserScreen(role: 'user'); // Regular user
+          }
+        }),
       ),
     );
   }

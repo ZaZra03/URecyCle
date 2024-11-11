@@ -1,65 +1,85 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
-import 'package:urecycle_app/model/user_model.dart';
-import 'package:urecycle_app/model/leaderboard_model.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:urecycle_app/services/firebase_service.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
+import '../model/hive_model/leaderboard_model_hive.dart';
+import '../model/hive_model/pushnotification_model_hive.dart';
+import '../model/hive_model/transaction_model_hive.dart';
+import '../model/hive_model/user_model_hive.dart';
+import '../services/hive_service.dart';
 import '../services/transaction_service.dart';
 import '../services/disposal_service.dart';
 
 class UserProvider with ChangeNotifier {
   UserModel? _user;
   LeaderboardEntry? _lbUser;
-  List<Map<String, dynamic>> _top3Users = [];
+  List<LeaderboardEntry> _top3Users = [];
   List<dynamic> _notifications = [];
-  List<Map<String, dynamic>> _transactions = [];
+  List<TransactionModel> _transactions = [];
   bool _isLoading = false;
-
   int _totalDisposals = 0;
 
+  // Getters
   UserModel? get user => _user;
   LeaderboardEntry? get lbUser => _lbUser;
-  List<Map<String, dynamic>> get top3Users => _top3Users;
+  List<LeaderboardEntry> get top3Users => _top3Users;
   List<dynamic> get notifications => _notifications;
-  List<Map<String, dynamic>> get transactions => _transactions;
+  List<TransactionModel> get transactions => _transactions;
   bool get isLoading => _isLoading;
-
   int get totalDisposals => _totalDisposals;
 
+  // Services
   final TransactionService _transactionService = TransactionService();
   final LeaderboardService _leaderboardService = LeaderboardService();
   final DisposalService _disposalService = DisposalService();
   final FirebaseApi _firebaseApi = FirebaseApi();
 
-  // Initialize Hive boxes
-  final Box _userBox = Hive.box('userBox');
-  final Box _notificationsBox = Hive.box('notificationsBox');
-  final Box _transactionsBox = Hive.box('transactionsBox');
-  final Box _disposalBox = Hive.box('disposalBox');
-
+  // Hive boxes
+  final _userBox = HiveService().userBox;
+  final _userlbBox = HiveService().userlbBox;
+  final _leaderboardBox = HiveService().leaderboardBox;
+  final _notificationsBox = HiveService().notificationsBox;
+  final _transactionsBox = HiveService().transactionsBox;
+  final _totaldisposalBox = HiveService().totaldisposalBox;
 
   // Initialize Firebase notifications
   Future<void> initNotifications() async {
     await _firebaseApi.initNotifications();
   }
 
+  // Check network connection
+  Future<bool> _isConnected() async {
+    final connectivityResult = await Connectivity().checkConnectivity();
+    return connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile);
+  }
+
+
   // Fetch user data from the service and store it in Hive
   Future<void> fetchUserData() async {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      final data = await _leaderboardService.loadUserData();
-      _user = data['user'];
-      _lbUser = data['lbUser'];
-      _top3Users = List<Map<String, dynamic>>.from(data['top3Users']);
+    if (await _isConnected()) {
+      try {
+        final data = await _leaderboardService.loadUserData();
+        _user = UserModel.fromJson(data['user']);
+        _lbUser = LeaderboardEntry.fromJson(data['lbUser']);
+        _top3Users = (data['top3Users'] as List<dynamic>)
+            .map((user) => LeaderboardEntry.fromJson(user))
+            .toList();
 
-      // Store user data in Hive
-      await _userBox.put('user', _user?.toJson());
-      await _userBox.put('lbUser', _lbUser?.toJson());
-      await _userBox.put('top3Users', _top3Users);
-    } catch (e) {
-      print('Error loading user data: $e');
+        // Store data in Hive
+        await _userBox.put('user', _user!);
+        await _userlbBox.put('lbUser', _lbUser!);
+        await _leaderboardBox.put('top3Users', _top3Users);
+      } catch (e) {
+        print('Error loading user data: $e');
+      }
+    } else {
+      // Load specific data from Hive when offline
+      _user = _userBox.get('user');
+      _lbUser = _userlbBox.get('lbUser');
+      _top3Users = _leaderboardBox.get('top3Users')!;
     }
 
     _isLoading = false;
@@ -68,16 +88,20 @@ class UserProvider with ChangeNotifier {
 
   // Fetch notifications and store in Hive
   Future<void> fetchNotifications() async {
-    try {
-      _notifications = await _firebaseApi.fetchNotifications(_user!.studentNumber);
+    if (await _isConnected()) {
+      try {
+        _notifications = await _firebaseApi.fetchNotifications(_user!.studentNumber);
 
-      // Store notifications in Hive
-      await _notificationsBox.put('notifications', _notifications);
-
-      notifyListeners();
-    } catch (e) {
-      print('Error fetching notifications: $e');
+        // Store notifications in Hive
+        await _notificationsBox.put('notifications', _notifications);
+      } catch (e) {
+        print('Error fetching notifications: $e');
+      }
+    } else {
+      // Load notifications from Hive when offline
+      _notifications = _notificationsBox.get('notifications')!;
     }
+    notifyListeners();
   }
 
   // Fetch transactions and store in Hive
@@ -85,15 +109,22 @@ class UserProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      if (_user != null) {
-        _transactions = await _transactionService.fetchTransactionsByStudentNumber(_user!.studentNumber);
+    if (await _isConnected()) {
+      try {
+        if (_user != null) {
+          _transactions = (await _transactionService.fetchTransactionsByStudentNumber(_user!.studentNumber))
+              .map((transaction) => TransactionModel.fromJson(transaction))
+              .toList();
 
-        // Store transactions in Hive
-        await _transactionsBox.put('transactions', _transactions);
+          // Store transactions in Hive
+          await _transactionsBox.put('transactions', _transactions);
+        }
+      } catch (e) {
+        print('Error fetching transactions: $e');
       }
-    } catch (e) {
-      print('Error fetching transactions: $e');
+    } else {
+      // Load transactions from Hive when offline
+      _transactions = _transactionsBox.get('transactions')!;
     }
 
     _isLoading = false;
@@ -105,22 +136,21 @@ class UserProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    try {
-      _totalDisposals = await _disposalService.fetchTotalDisposals();
+    if (await _isConnected()) {
+      try {
+        _totalDisposals = await _disposalService.fetchTotalDisposals();
 
-      // Store total disposals in Hive
-      await _disposalBox.put('totalDisposals', _totalDisposals);
-    } catch (e) {
-      print('Error fetching total disposals: $e');
+        // Store total disposals in Hive
+        await _totaldisposalBox.put('totalDisposals', _totalDisposals);
+      } catch (e) {
+        print('Error fetching total disposals: $e');
+      }
+    } else {
+      // Load total disposals from Hive when offline
+      _totalDisposals = _totaldisposalBox.get('totalDisposals')!;
     }
 
     _isLoading = false;
-    notifyListeners();
-  }
-
-  // Load total disposals from Hive
-  void loadDisposalsFromHive() {
-    _totalDisposals = _disposalBox.get('totalDisposals', defaultValue: 0);
     notifyListeners();
   }
 
@@ -139,22 +169,14 @@ class UserProvider with ChangeNotifier {
     }
   }
 
-  // Load data from Hive into provider variables
-  void loadFromHive() {
-    _user = UserModel.fromJson(_userBox.get('user'));
-    _lbUser = LeaderboardEntry.fromJson(_userBox.get('lbUser'));
-    _top3Users = List<Map<String, dynamic>>.from(_userBox.get('top3Users', defaultValue: []));
-    _notifications = _notificationsBox.get('notifications', defaultValue: []);
-    _transactions = _transactionsBox.get('transactions', defaultValue: []);
-    _totalDisposals = _userBox.get('totalDisposals', defaultValue: 0);
-    notifyListeners();
-  }
-
   // Reset all data in provider and clear Hive storage
   void reset() {
     _userBox.clear();
+    _userlbBox.clear();
+    _leaderboardBox.clear();
     _notificationsBox.clear();
     _transactionsBox.clear();
+    _totaldisposalBox.clear();
     _user = null;
     _lbUser = null;
     _top3Users = [];

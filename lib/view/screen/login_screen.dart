@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/widget/auth_textfield.dart';
@@ -7,8 +6,10 @@ import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/view/screen/user_screen.dart';
 import 'package:urecycle_app/view/screen/admin_screen.dart';
 import 'package:urecycle_app/view/widget/loading_widget.dart';
+import '../../model/hive_model/user_model_hive.dart';
 import '../../provider/admin_provider.dart';
 import '../../provider/user_provider.dart';
+import '../../services/hive_service.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -37,11 +38,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final user = responseData['user'];
         final String role = user['role'];
-
-        // Save the role and login state to Hive
-        final box = await Hive.openBox('app_data');
-        await box.put('userRole', role); // Store the role in Hive
-        await box.put('isLoggedIn', true); // Store login state in Hive
 
         if (role == 'admin') {
           final adminProvider = Provider.of<AdminProvider>(context, listen: false);
@@ -89,6 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
           throw Exception('Invalid role');
         }
       } catch (e) {
+        print('Login failed: $e');
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: $e')),
@@ -96,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
   }
+
 
   @override
   Widget build(BuildContext context) {

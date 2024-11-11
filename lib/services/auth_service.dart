@@ -3,7 +3,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
-import 'package:urecycle_app/model/user_model.dart';
+import '../model/hive_model/user_model_hive.dart';
+import 'hive_service.dart';
+
 
 class AuthService {
   // Store token locally in shared preferences
@@ -96,13 +98,16 @@ class AuthService {
           'fcmToken': fcmToken, // Send FCM token to backend
         }),
       );
-
+      print(response.statusCode);
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
         final String? token = responseData['token'];
+        print(token);
+        print(token != null);
         if (token != null) {
           await storeToken(token);
         }
+        print("My token is ${getToken()}");
         return responseData;
       } else {
         final Map<String, dynamic> errorResponse = jsonDecode(response.body);
@@ -119,6 +124,7 @@ class AuthService {
     final String? tokenBefore = await getToken();
     print('Token before deletion: $tokenBefore');
 
+    // Delete the token
     await deleteToken();
 
     final String? tokenAfter = await getToken();
@@ -135,8 +141,9 @@ class AuthService {
 // Fetch user data from the server using the stored token
 Future<UserModel?> fetchUserData(Uri url) async {
   try {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+    final token = await AuthService.getToken();
+    print("Token is null?");
+    print(token == null);
 
     if (token == null) {
       throw Exception('No token found');
@@ -148,7 +155,7 @@ Future<UserModel?> fetchUserData(Uri url) async {
         'Authorization': 'Bearer $token',
       },
     );
-
+    print(response.statusCode);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       print(data);

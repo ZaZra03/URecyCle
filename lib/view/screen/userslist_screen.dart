@@ -46,7 +46,7 @@ class UserListScreen extends StatelessWidget {
               return DataRow(
                 cells: <DataCell>[
                   DataCell(Text(user.firstName)),
-                  DataCell(Text(user!.lastName ?? 'N/A')),
+                  DataCell(Text(user.lastName ?? 'N/A')),
                   DataCell(Text(user.email)),
                   DataCell(Text(user.studentNumber)),
                   DataCell(Text(user.college ?? 'N/A')), // Show 'N/A' if college is null

@@ -43,10 +43,9 @@ class _TransactionState extends State<Transaction> {
             String date = 'No Date';
             String time = '';
             try {
-              if (transaction['createdAt'] != null) {
-                final createdAt = DateTime.parse(transaction['createdAt']);
-                date = DateFormat('MMMM d, yyyy').format(createdAt.toLocal());
-                time = DateFormat('h:mm a').format(createdAt.toLocal());
+              if (transaction.createdAt != null) {
+                date = DateFormat('MMMM d, yyyy').format(transaction.createdAt!.toLocal());
+                time = DateFormat('h:mm a').format(transaction.createdAt!.toLocal());
               }
             } catch (e) {
               print('Error parsing date: $e');
@@ -61,7 +60,7 @@ class _TransactionState extends State<Transaction> {
                   Icons.delete_outline,
                   color: Colors.red,
                 ),
-                title: Text('Type: ${transaction['wasteType']}'),
+                title: Text('Type: ${transaction.wasteType}'),
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Column(

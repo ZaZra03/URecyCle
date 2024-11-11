@@ -44,16 +44,15 @@ class _NotificationsState extends State<Notifications> {
 
             final notification = notifications[index];
 
-            String title = notification['title'] ?? 'No Title';
-            String body = notification['body'] ?? 'No Body';
-            String notificationId = notification['_id'];
+            String title = notification.title ?? 'No Title';
+            String body = notification.body ?? 'No Body';
 
             // Parse and format the 'createdAt' timestamp
             String date = 'No Date';
             String time = '';
             try {
-              if (notification['createdAt'] != null) {
-                final createdAt = DateTime.parse(notification['createdAt']);
+              if (notification.createdAt != null) {
+                final createdAt = notification.createdAt!;
                 date = DateFormat('MMMM d, yyyy').format(createdAt.toLocal());
                 time = DateFormat('h:mm a').format(createdAt.toLocal());
               }
@@ -62,7 +61,7 @@ class _NotificationsState extends State<Notifications> {
             }
 
             return Dismissible(
-              key: Key(notificationId),
+              key: Key(notification.toString()),
               direction: DismissDirection.endToStart,
               background: Container(
                 color: Colors.red,
@@ -71,7 +70,7 @@ class _NotificationsState extends State<Notifications> {
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               onDismissed: (direction) async {
-                await userProvider.deleteNotification(notificationId);
+                await userProvider.deleteNotification(notification);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('$title deleted'),

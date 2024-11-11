@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:urecycle_app/model/user_model.dart';
-import '../../model/leaderboard_model.dart';
+import '../../model/hive_model/leaderboard_model_hive.dart';
+import '../../model/hive_model/user_model_hive.dart';
 import 'custom_card.dart';
 import 'leaderboard_position.dart';
 import '../../provider/user_provider.dart'; // Import your UserProvider
@@ -66,24 +66,24 @@ class LeaderboardCard extends StatelessWidget {
                     if (topEntries[1] != null)
                       LeaderboardPosition(
                         position: 2,
-                        name: _sliceName(topEntries[1]!['name']),
-                        points: '${topEntries[1]!['points']} PTS',
+                        name: _sliceName(topEntries[1]!.name),
+                        points: '${topEntries[1]!.points} PTS',
                         color: Colors.orange,
                         isFirst: false,
                       ),
                     if (topEntries[0] != null)
                       LeaderboardPosition(
                         position: 1,
-                        name: _sliceName(topEntries[0]!['name']),
-                        points: '${topEntries[0]!['points']} PTS',
+                        name: _sliceName(topEntries[0]!.name),
+                        points: '${topEntries[0]!.points} PTS',
                         color: Colors.red,
                         isFirst: true,
                       ),
                     if (topEntries[2] != null)
                       LeaderboardPosition(
                         position: 3,
-                        name: _sliceName(topEntries[2]!['name']),
-                        points: '${topEntries[2]!['points']} PTS',
+                        name: _sliceName(topEntries[2]!.name),
+                        points: '${topEntries[2]!.points} PTS',
                         color: Colors.purpleAccent,
                         isFirst: false,
                       ),

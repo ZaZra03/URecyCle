@@ -3,11 +3,13 @@ import 'package:urecycle_app/services/leaderboard_service.dart';
 import 'package:urecycle_app/view/widget/leaderboard_position2.dart';
 
 import '../../constants.dart';
+import '../../model/hive_model/leaderboard_model_hive.dart';
 
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});
 
-  String _sliceName(String name) {
+  String _sliceName(String? name) {
+    if (name == null) return '';
     final parts = name.split(' ');
     return parts.isNotEmpty ? parts[0] : name;
   }
@@ -47,9 +49,9 @@ class LeaderboardPage extends StatelessWidget {
             pinned: true,
             backgroundColor: Constants.primaryColor,
             flexibleSpace: FlexibleSpaceBar(
-              background: FutureBuilder<List<Map<String, dynamic>>>(
+              background: FutureBuilder<List<LeaderboardEntry>?>(
                 future: LeaderboardService().fetchTop3Entries(),
-                builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+                builder: (BuildContext context, AsyncSnapshot<List<LeaderboardEntry>?> snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator());
                   } else if (snapshot.hasError) {
@@ -58,8 +60,6 @@ class LeaderboardPage extends StatelessWidget {
                     return const Center(child: Text('No leaderboard entries found.'));
                   } else {
                     final entries = snapshot.data!;
-
-                    // Ensure you have at least 3 entries to avoid index errors
                     final topEntries = List.generate(
                       3,
                           (index) => entries.length > index ? entries[index] : null,
@@ -77,24 +77,24 @@ class LeaderboardPage extends StatelessWidget {
                               if (topEntries[1] != null)
                                 LeaderboardPosition(
                                   position: 2,
-                                  name: _sliceName(topEntries[1]!['name']),
-                                  points: '${topEntries[1]!['points']} PTS',
+                                  name: _sliceName(topEntries[1]?.name),
+                                  points: '${topEntries[1]?.points ?? 0} PTS',
                                   color: Colors.orange,
                                   isFirst: false,
                                 ),
                               if (topEntries[0] != null)
                                 LeaderboardPosition(
                                   position: 1,
-                                  name: _sliceName(topEntries[0]!['name']),
-                                  points: '${topEntries[0]!['points']} PTS',
+                                  name: _sliceName(topEntries[0]?.name),
+                                  points: '${topEntries[0]?.points ?? 0} PTS',
                                   color: Colors.red,
                                   isFirst: true,
                                 ),
                               if (topEntries[2] != null)
                                 LeaderboardPosition(
                                   position: 3,
-                                  name: _sliceName(topEntries[2]!['name']),
-                                  points: '${topEntries[2]!['points']} PTS',
+                                  name: _sliceName(topEntries[2]?.name),
+                                  points: '${topEntries[2]?.points ?? 0} PTS',
                                   color: Colors.purpleAccent,
                                   isFirst: false,
                                 ),
@@ -108,9 +108,9 @@ class LeaderboardPage extends StatelessWidget {
               ),
             ),
           ),
-          FutureBuilder<List<Map<String, dynamic>>>(
+          FutureBuilder<List<LeaderboardEntry>?>(
             future: LeaderboardService().fetchLeaderboardEntries(),
-            builder: (BuildContext context, AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
+            builder: (BuildContext context, AsyncSnapshot<List<LeaderboardEntry>?> snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
@@ -131,11 +131,11 @@ class LeaderboardPage extends StatelessWidget {
                         (BuildContext context, int index) {
                       final entry = entries[index];
                       final rank = index + 1;
-                      return LeaderboardEntry(
-                        rank: rank,
-                        name: entry['name'],
-                        college: entry['college'],
-                        points: entry['points'],
+                      return ListTile(
+                        leading: CircleAvatar(child: Text(rank.toString())),
+                        title: Text(entry.name),
+                        subtitle: Text(entry.college),
+                        trailing: Text(entry.points.toString()),
                       );
                     },
                     childCount: entries.length,
@@ -146,31 +146,6 @@ class LeaderboardPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-class LeaderboardEntry extends StatelessWidget {
-  final int rank;
-  final String name;
-  final String college;
-  final int points;
-
-  const LeaderboardEntry({
-    super.key,
-    required this.rank,
-    required this.name,
-    required this.college,
-    required this.points,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: CircleAvatar(child: Text(rank.toString())),
-      title: Text(name),
-      subtitle: Text(college),
-      trailing: Text(points.toString()),
     );
   }
 }

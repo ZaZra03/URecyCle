@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import '../model/disposal_model.dart';
+import 'package:hive/hive.dart';
+import '../model/hive_model/disposal_model_hive.dart';
+import '../model/hive_model/user_model_hive.dart';
 import '../services/auth_service.dart';
-import '../model/user_model.dart';
 import '../../services/firebase_service.dart';
 import '../constants.dart';
 import '../services/binstate_service.dart';
 import '../services/disposal_service.dart';
+import '../services/hive_service.dart';
 import '../services/user_service.dart';
 
 class AdminProvider with ChangeNotifier {
@@ -15,10 +17,16 @@ class AdminProvider with ChangeNotifier {
   List<Disposal> _weeklyDisposals = [];
   Map<String, double> _wasteTypePercentages = {};
 
+  // Services
   final DisposalService _disposalService = DisposalService();
   final FirebaseApi _firebaseApi = FirebaseApi();
   final BinStateService _binStateService = BinStateService();
   final UserService _userService = UserService();
+
+  // Hive boxes
+  final _userBox = HiveService().userBox;
+  final Box _binstateBox = HiveService().binBox;
+  final Box _disposalBox = HiveService().disposalBox;
 
   // Getters for accessing state variables
   UserModel? get user => _user;
@@ -37,6 +45,9 @@ class AdminProvider with ChangeNotifier {
     try {
       _user = await fetchUserData(Uri.parse(Constants.user));
       _isAcceptingWaste = await _binStateService.getAcceptingWasteStatus() ?? false;
+
+      await _userBox.put('user', _user!);
+
       notifyListeners();
     } catch (e) {
       print('Error loading admin data: $e');

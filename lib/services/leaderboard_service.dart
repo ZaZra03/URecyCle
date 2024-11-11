@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/services/auth_service.dart';
-import '../model/leaderboard_model.dart';
+import '../model/hive_model/leaderboard_model_hive.dart';
 
 class LeaderboardService {
   // URLs for API endpoints
@@ -10,23 +10,24 @@ class LeaderboardService {
   final Uri lbTop3 = Uri.parse(Constants.lbTop3);
 
   // Fetch all leaderboard entries from the server
-  Future<List<Map<String, dynamic>>> fetchLeaderboardEntries() async {
-    print('Leaderboard URL: $leaderboard'); // Debugging
-
+  Future<List<LeaderboardEntry>?> fetchLeaderboardEntries() async {
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.get(
-        leaderboard,
+        leaderboard, // Ensure leaderboard is a valid Uri
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
         },
       );
 
-      print('Leaderboard Response Status Code: ${response.statusCode}');
-      print('Leaderboard Response Body: ${response.body}');
-
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(data); // Convert data to a list of maps
+        return data.map((entry) => LeaderboardEntry.fromJson(entry)).toList();
       } else {
         final Map<String, dynamic> errorResponse = jsonDecode(response.body);
         final String errorMessage = errorResponse['error'] ?? 'Failed to fetch leaderboard entries';
@@ -37,15 +38,22 @@ class LeaderboardService {
     }
   }
 
+
   // Fetch top 3 leaderboard entries from the server
-  Future<List<Map<String, dynamic>>> fetchTop3Entries() async {
+  Future<List<LeaderboardEntry>?> fetchTop3Entries() async {
     print('Top 3 URL: $lbTop3'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.get(
         lbTop3,
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -54,7 +62,9 @@ class LeaderboardService {
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
-        return List<Map<String, dynamic>>.from(data); // Convert data to a list of maps
+        return data
+            .map((item) => LeaderboardEntry.fromJson(item as Map<String, dynamic>))
+            .toList();
       } else {
         final Map<String, dynamic> errorResponse = jsonDecode(response.body);
         final String errorMessage = errorResponse['error'] ?? 'Failed to fetch top 3 leaderboard entries';
@@ -65,16 +75,23 @@ class LeaderboardService {
     }
   }
 
+
   // Fetch a specific leaderboard entry by student number from the server
   Future<LeaderboardEntry?> getEntryByStudentNumber(String studentNumber) async {
     final Uri userUri = Uri.parse('${Constants.leaderboard}/$studentNumber');
     print('User URL: $userUri'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.get(
         userUri,
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
         },
       );
 
@@ -103,10 +120,16 @@ class LeaderboardService {
     print('Add Points URL: $addPointsUri'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.post(
         addPointsUri,
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode(<String, dynamic>{
           // Add the fixed points here if required by the backend
@@ -126,15 +149,22 @@ class LeaderboardService {
     }
   }
 
+  // Deduct points from a specific leaderboard entry by student number
   Future<void> deductPointsFromUser(String studentNumber, int pointsToDeduct) async {
     final Uri deductPointsUri = Uri.parse('${Constants.leaderboard}/$studentNumber/deduct-points');
     print('Deduct Points URL: $deductPointsUri'); // Debugging
 
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.post(
         deductPointsUri,
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
+          'Authorization': 'Bearer $token',
         },
         body: jsonEncode(<String, dynamic>{
           'pointsToDeduct': pointsToDeduct,
@@ -154,6 +184,7 @@ class LeaderboardService {
     }
   }
 
+  // Load user data including leaderboard entry and top 3 entries
   Future<Map<String, dynamic>> loadUserData() async {
     final LeaderboardService lbService = LeaderboardService();
     final Uri url = Uri.parse(Constants.user);
@@ -164,9 +195,9 @@ class LeaderboardService {
       final top3Users = await lbService.fetchTop3Entries();
 
       return {
-        'user': user,
-        'lbUser': lbUser,
-        'top3Users': top3Users,
+        'user': user?.toJson(),  // Ensure user is converted to JSON format
+        'lbUser': lbUser?.toJson(),  // Ensure lbUser is converted to JSON format
+        'top3Users': top3Users?.map((entry) => entry.toJson()).toList(),  // Convert each top3 entry to JSON
       };
     } catch (e) {
       print('Error loading user data: $e');
@@ -174,5 +205,3 @@ class LeaderboardService {
     }
   }
 }
-
-

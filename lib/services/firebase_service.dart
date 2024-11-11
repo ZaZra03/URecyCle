@@ -3,6 +3,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../constants.dart';
+import '../services/auth_service.dart';
 
 class FirebaseApi {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -68,9 +69,17 @@ class FirebaseApi {
 
   Future<List<dynamic>> fetchNotifications(String studentNumber) async {
     final Uri uri = Uri.parse('${Constants.getNotification}/$studentNumber');
+    String? token = await AuthService.getToken();
+    if (token == null) {
+      throw Exception('No token found');
+    }
+
     final response = await http.get(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode == 200) {
@@ -82,9 +91,17 @@ class FirebaseApi {
 
   Future<void> deleteNotification(String studentNumber, String notificationId) async {
     final Uri uri = Uri.parse('${Constants.getNotification}/$studentNumber/$notificationId');
+    String? token = await AuthService.getToken();
+    if (token == null) {
+      throw Exception('No token found');
+    }
+
     final response = await http.delete(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
     );
 
     if (response.statusCode != 200) {
@@ -99,9 +116,17 @@ class FirebaseApi {
     Map<String, String>? data,
   }) async {
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.post(
         Uri.parse(Constants.sendNotification),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token', // Add the authorization header
+        },
         body: json.encode({
           'fcmToken': fcmToken,
           'title': title,
@@ -120,15 +145,24 @@ class FirebaseApi {
     }
   }
 
+
   Future<void> sendNotificationToAllUsers({
     required String title,
     required String body,
     Map<String, String>? data,
   }) async {
     try {
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
       final response = await http.get(
         Uri.parse(Constants.allUsers),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
       );
 
       if (response.statusCode == 200) {

@@ -1,7 +1,8 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:urecycle_app/constants.dart';
-import '../model/disposal_model.dart';
+import '../constants.dart';
+import '../model/hive_model/disposal_model_hive.dart';
+import '../services/auth_service.dart';
 
 class DisposalService {
   // API endpoint for fetching total disposals
@@ -12,7 +13,17 @@ class DisposalService {
   // Fetch the total number of disposals
   Future<int> fetchTotalDisposals() async {
     try {
-      final response = await http.get(totalDisposalsUri);
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        totalDisposalsUri,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -28,8 +39,17 @@ class DisposalService {
   // Fetch all disposals
   Future<List<Disposal>> fetchAllDisposals() async {
     try {
-      final response = await http.get(allDisposalsUri);
-      print('Response Status Code: ${response.statusCode}');
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        allDisposalsUri,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
@@ -46,7 +66,17 @@ class DisposalService {
   // Fetch weekly disposals
   Future<List<dynamic>> fetchWeeklyDisposals() async {
     try {
-      final response = await http.get(weeklyDisposalsUri);
+      String? token = await AuthService.getToken();
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        weeklyDisposalsUri,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body); // The weekly disposals data

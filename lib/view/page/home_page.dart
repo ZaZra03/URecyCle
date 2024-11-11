@@ -19,7 +19,6 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    print('Printing this shit');
     // Ensure that fetchUserData is called after the widget has been built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final userProvider = Provider.of<UserProvider>(context, listen: false);

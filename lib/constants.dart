@@ -14,7 +14,8 @@ class Constants {
   static var gray04Color = const Color(0xFF666666);
 
   //Routes
-  static const url = 'https://urecycle-backend.onrender.com/';
+  // static const url = 'https://urecycle-backend.onrender.com/';
+  static const url = 'http://192.168.18.10:3000/';
   static const register = '${url}register';
   static const login = '${url}login';
   static const leaderboard = '${url}leaderboard';
@@ -27,6 +28,6 @@ class Constants {
   static const createTransaction = '${url}transactions';
   static const totalDisposals = '${url}total-disposal';
   static const allDisposals = '${url}all-disposal';
-  static const String weeklyDisposals = '${url}weekly-disposals';
+  static const weeklyDisposals = '${url}weekly-disposals';
   static const binstate = '${url}binstate';
 }
