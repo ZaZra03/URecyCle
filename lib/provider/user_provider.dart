@@ -3,7 +3,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:urecycle_app/services/firebase_service.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
 import '../model/hive_model/leaderboard_model_hive.dart';
-import '../model/hive_model/pushnotification_model_hive.dart';
 import '../model/hive_model/transaction_model_hive.dart';
 import '../model/hive_model/user_model_hive.dart';
 import '../services/hive_service.dart';
@@ -13,6 +12,7 @@ import '../services/disposal_service.dart';
 class UserProvider with ChangeNotifier {
   UserModel? _user;
   LeaderboardEntry? _lbUser;
+  List<LeaderboardEntry> _leaderboards = [];
   List<LeaderboardEntry> _top3Users = [];
   List<dynamic> _notifications = [];
   List<TransactionModel> _transactions = [];
@@ -22,6 +22,7 @@ class UserProvider with ChangeNotifier {
   // Getters
   UserModel? get user => _user;
   LeaderboardEntry? get lbUser => _lbUser;
+  List<LeaderboardEntry> get leaderboards => _leaderboards;
   List<LeaderboardEntry> get top3Users => _top3Users;
   List<dynamic> get notifications => _notifications;
   List<TransactionModel> get transactions => _transactions;
@@ -38,6 +39,7 @@ class UserProvider with ChangeNotifier {
   final _userBox = HiveService().userBox;
   final _userlbBox = HiveService().userlbBox;
   final _leaderboardBox = HiveService().leaderboardBox;
+  final _top3lbBox = HiveService().top3lbBox;
   final _notificationsBox = HiveService().notificationsBox;
   final _transactionsBox = HiveService().transactionsBox;
   final _totaldisposalBox = HiveService().totaldisposalBox;
@@ -71,7 +73,7 @@ class UserProvider with ChangeNotifier {
         // Store data in Hive
         await _userBox.put('user', _user!);
         await _userlbBox.put('lbUser', _lbUser!);
-        await _leaderboardBox.put('top3Users', _top3Users);
+        await _top3lbBox.put('top3Users', _top3Users);
       } catch (e) {
         print('Error loading user data: $e');
       }
@@ -79,7 +81,35 @@ class UserProvider with ChangeNotifier {
       // Load specific data from Hive when offline
       _user = _userBox.get('user');
       _lbUser = _userlbBox.get('lbUser');
-      _top3Users = _leaderboardBox.get('top3Users')!;
+      _top3Users = _top3lbBox.get('top3Users')!;
+    }
+
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  // Fetch all leaderboard entries and store in Hive
+  Future<void> fetchLeaderboardEntries() async {
+    _isLoading = true;
+    notifyListeners();
+
+    if (await _isConnected()) {
+      try {
+        final leaderboardEntries = await _leaderboardService.fetchLeaderboardEntries();
+        if (leaderboardEntries != null) {
+          // Save leaderboard entries in the Hive box
+          await _leaderboardBox.put('leaderboardEntries', leaderboardEntries);
+
+          // Update provider data
+          _leaderboards = leaderboardEntries;
+          _top3Users = leaderboardEntries.take(3).toList();
+        }
+      } catch (e) {
+        print('Error fetching leaderboard entries: $e');
+      }
+    } else {
+      _leaderboards = _leaderboardBox.get('leaderboardEntries')!;
+      _top3Users = _top3lbBox.get('top3Users')!;
     }
 
     _isLoading = false;
@@ -174,6 +204,7 @@ class UserProvider with ChangeNotifier {
     _userBox.clear();
     _userlbBox.clear();
     _leaderboardBox.clear();
+    _top3lbBox.clear();
     _notificationsBox.clear();
     _transactionsBox.clear();
     _totaldisposalBox.clear();

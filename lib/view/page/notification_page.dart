@@ -14,6 +14,7 @@ class _NotificationsState extends State<Notifications> {
   @override
   void initState() {
     super.initState();
+    _fetchNotifications();
   }
 
   Future<void> _fetchNotifications() async {
@@ -28,31 +29,30 @@ class _NotificationsState extends State<Notifications> {
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
-    final notifications = userProvider.notifications.reversed.toList(); // Reverse the list
+    final notifications = userProvider.notifications.reversed.toList();
 
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: _refreshNotifications,
         child: ListView.separated(
-          itemCount: notifications.length + 1, // Increase itemCount by 1 to include the SizedBox
+          itemCount: notifications.length + 1, // Include extra space
           separatorBuilder: (context, index) => const Divider(),
           itemBuilder: (context, index) {
-            // If the index is the last item, return SizedBox
             if (index == notifications.length) {
-              return const SizedBox(height: 40);
+              return const SizedBox(height: 40); // Extra space at the end
             }
 
             final notification = notifications[index];
+            final notificationId = notification['_id'];
+            final title = notification['title'] ?? 'No Title';
+            final body = notification['body'] ?? 'No Body';
 
-            String title = notification.title ?? 'No Title';
-            String body = notification.body ?? 'No Body';
-
-            // Parse and format the 'createdAt' timestamp
+            // Parse and format 'createdAt' timestamp
             String date = 'No Date';
             String time = '';
             try {
-              if (notification.createdAt != null) {
-                final createdAt = notification.createdAt!;
+              if (notification['createdAt'] != null) {
+                final createdAt = DateTime.parse(notification['createdAt']);
                 date = DateFormat('MMMM d, yyyy').format(createdAt.toLocal());
                 time = DateFormat('h:mm a').format(createdAt.toLocal());
               }
@@ -61,7 +61,7 @@ class _NotificationsState extends State<Notifications> {
             }
 
             return Dismissible(
-              key: Key(notification.toString()),
+              key: Key(notificationId),
               direction: DismissDirection.endToStart,
               background: Container(
                 color: Colors.red,
@@ -70,7 +70,15 @@ class _NotificationsState extends State<Notifications> {
                 child: const Icon(Icons.delete, color: Colors.white),
               ),
               onDismissed: (direction) async {
-                await userProvider.deleteNotification(notification);
+                // Optimistically remove notification
+                setState(() {
+                  userProvider.notifications.removeWhere((n) => n['_id'] == notificationId);
+                });
+
+                // Delete notification from provider
+                await userProvider.deleteNotification(notificationId);
+
+                // Show confirmation Snackbar
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('$title deleted'),
@@ -80,7 +88,10 @@ class _NotificationsState extends State<Notifications> {
               },
               child: ListTile(
                 leading: const Icon(Icons.notifications),
-                title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Column(

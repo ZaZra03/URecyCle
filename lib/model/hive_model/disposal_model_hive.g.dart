@@ -17,10 +17,10 @@ class DisposalAdapter extends TypeAdapter<Disposal> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return Disposal(
-      id: fields[0] as String,
-      wasteType: fields[1] as String,
-      createdAt: fields[2] as DateTime,
-      updatedAt: fields[3] as DateTime,
+      wasteType: fields[0] as String,
+      createdAt: fields[1] as DateTime,
+      updatedAt: fields[2] as DateTime,
+      dayOfWeek: fields[3] as int,
     );
   }
 
@@ -29,13 +29,13 @@ class DisposalAdapter extends TypeAdapter<Disposal> {
     writer
       ..writeByte(4)
       ..writeByte(0)
-      ..write(obj.id)
-      ..writeByte(1)
       ..write(obj.wasteType)
-      ..writeByte(2)
+      ..writeByte(1)
       ..write(obj.createdAt)
+      ..writeByte(2)
+      ..write(obj.updatedAt)
       ..writeByte(3)
-      ..write(obj.updatedAt);
+      ..write(obj.dayOfWeek);
   }
 
   @override

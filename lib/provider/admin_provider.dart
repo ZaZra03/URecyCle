@@ -17,6 +17,7 @@ class AdminProvider with ChangeNotifier {
   List<Disposal> _weeklyDisposals = [];
   Map<String, double> _wasteTypePercentages = {};
 
+
   // Services
   final DisposalService _disposalService = DisposalService();
   final FirebaseApi _firebaseApi = FirebaseApi();
@@ -34,6 +35,7 @@ class AdminProvider with ChangeNotifier {
   bool get isAcceptingWaste => _isAcceptingWaste;
   List<Disposal> get weeklyDisposals => _weeklyDisposals;
   Map<String, double> get wasteTypePercentages => _wasteTypePercentages;
+  Map<String, int> get wasteTypeTotals => _calculateWasteTypeTotals(_weeklyDisposals);
 
   AdminProvider() {
     _firebaseApi.initNotifications();
@@ -70,7 +72,7 @@ class AdminProvider with ChangeNotifier {
   Future<void> fetchDisposalData() async {
     try {
       print("fetchDisposalData is called");
-      _weeklyDisposals = (await _disposalService.fetchAllDisposals()).toList();
+      _weeklyDisposals = (await _disposalService.fetchWeeklyDisposals()).toList();
 
       // Log fetched disposals for debugging
       print("Filtered Weekly Disposals: $_weeklyDisposals");

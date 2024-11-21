@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../constants.dart';
-import '../../provider/admin_provider.dart';
+import '../../../constants.dart';
+import '../../../provider/admin_provider.dart';
 
 class UserListScreen extends StatelessWidget {
   const UserListScreen({super.key});

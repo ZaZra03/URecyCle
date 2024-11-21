@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:urecycle_app/view/screen/user_screen/accountinfo_screen.dart';
+import 'package:urecycle_app/view/screen/user_screen/faq_screen.dart';
 import '../../provider/user_provider.dart';
-import '../../provider/admin_provider.dart'; // Import AdminProvider
+import '../../provider/admin_provider.dart';
 import 'package:urecycle_app/view/widget/profile_widget.dart';
 import 'package:urecycle_app/constants.dart';
 import '../../services/auth_service.dart';
 import '../screen/login_screen.dart';
+import '../screen/user_screen/aboutus_screen.dart';
 import '../widget/loading_widget.dart';
 
 class Profile extends StatefulWidget {
@@ -141,21 +144,56 @@ class _ProfileState extends State<Profile> {
 
               const SizedBox(height: 30),
 
-              // Profile options
+              // Profile options with dividers
               SizedBox(
                 width: size.width,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     ProfileWidget(
-                      icon: Icons.settings,
-                      title: 'Account Settings',
+                      icon: Icons.account_circle, // Account Info icon
+                      title: 'Account Info',
                       onTap: () {
-                        // Handle account settings tap
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AccountInfo(role: widget.role),
+                          ),
+                        );
                       },
                     ),
+                    const Divider(), // Divider between Account Info and the next option
+
                     ProfileWidget(
-                      icon: Icons.logout,
+                      icon: Icons.question_answer, // FAQ icon
+                      title: 'FAQ',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const FAQ(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(), // Divider between FAQ and the next option
+
+                    ProfileWidget(
+                      icon: Icons.info, // About Us icon
+                      title: 'About Us',
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AboutUs(),
+                          ),
+                        );
+                      },
+                    ),
+                    const Divider(), // Divider between About Us and the next option
+
+                    ProfileWidget(
+                      icon: Icons.logout, // Logout icon
                       title: 'Log Out',
                       onTap: _logout,
                     ),

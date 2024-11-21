@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:urecycle_app/services/leaderboard_service.dart';
+import 'package:provider/provider.dart';
 import 'package:urecycle_app/view/widget/leaderboard_position2.dart';
-
 import '../../constants.dart';
-import '../../model/hive_model/leaderboard_model_hive.dart';
+import '../../provider/user_provider.dart';
 
 class LeaderboardPage extends StatelessWidget {
   const LeaderboardPage({super.key});
@@ -16,6 +15,13 @@ class LeaderboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+    // Ensure the leaderboard data is fetched
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      userProvider.fetchLeaderboardEntries();
+    });
+
     return Scaffold(
       body: CustomScrollView(
         slivers: <Widget>[
@@ -49,22 +55,14 @@ class LeaderboardPage extends StatelessWidget {
             pinned: true,
             backgroundColor: Constants.primaryColor,
             flexibleSpace: FlexibleSpaceBar(
-              background: FutureBuilder<List<LeaderboardEntry>?>(
-                future: LeaderboardService().fetchTop3Entries(),
-                builder: (BuildContext context, AsyncSnapshot<List<LeaderboardEntry>?> snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+              background: Consumer<UserProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isLoading) {
                     return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  } else if (provider.top3Users.isEmpty) {
                     return const Center(child: Text('No leaderboard entries found.'));
                   } else {
-                    final entries = snapshot.data!;
-                    final topEntries = List.generate(
-                      3,
-                          (index) => entries.length > index ? entries[index] : null,
-                      growable: false,
-                    );
+                    final topEntries = provider.top3Users;
 
                     return Padding(
                       padding: const EdgeInsets.only(top: 50.0),
@@ -74,27 +72,27 @@ class LeaderboardPage extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
-                              if (topEntries[1] != null)
+                              if (topEntries.length > 1)
                                 LeaderboardPosition(
                                   position: 2,
-                                  name: _sliceName(topEntries[1]?.name),
-                                  points: '${topEntries[1]?.points ?? 0} PTS',
+                                  name: _sliceName(topEntries[1].name),
+                                  points: '${topEntries[1].points} PTS',
                                   color: Colors.orange,
                                   isFirst: false,
                                 ),
-                              if (topEntries[0] != null)
+                              if (topEntries.isNotEmpty)
                                 LeaderboardPosition(
                                   position: 1,
-                                  name: _sliceName(topEntries[0]?.name),
-                                  points: '${topEntries[0]?.points ?? 0} PTS',
+                                  name: _sliceName(topEntries[0].name),
+                                  points: '${topEntries[0].points} PTS',
                                   color: Colors.red,
                                   isFirst: true,
                                 ),
-                              if (topEntries[2] != null)
+                              if (topEntries.length > 2)
                                 LeaderboardPosition(
                                   position: 3,
-                                  name: _sliceName(topEntries[2]?.name),
-                                  points: '${topEntries[2]?.points ?? 0} PTS',
+                                  name: _sliceName(topEntries[2].name),
+                                  points: '${topEntries[2].points} PTS',
                                   color: Colors.purpleAccent,
                                   isFirst: false,
                                 ),
@@ -108,23 +106,18 @@ class LeaderboardPage extends StatelessWidget {
               ),
             ),
           ),
-          FutureBuilder<List<LeaderboardEntry>?>(
-            future: LeaderboardService().fetchLeaderboardEntries(),
-            builder: (BuildContext context, AsyncSnapshot<List<LeaderboardEntry>?> snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+          Consumer<UserProvider>(
+            builder: (context, provider, child) {
+              if (provider.isLoading) {
                 return const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 );
-              } else if (snapshot.hasError) {
-                return SliverFillRemaining(
-                  child: Center(child: Text('Error: ${snapshot.error}')),
-                );
-              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              } else if (provider.leaderboards.isEmpty) {
                 return const SliverFillRemaining(
                   child: Center(child: Text('No leaderboard entries found.')),
                 );
               } else {
-                final entries = snapshot.data!;
+                final entries = provider.leaderboards;
 
                 return SliverList(
                   delegate: SliverChildBuilderDelegate(

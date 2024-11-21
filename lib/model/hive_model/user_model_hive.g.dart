@@ -24,8 +24,8 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       role: fields[4] as String,
       password: fields[5] as String,
       college: fields[6] as String?,
-      fcmToken: fields[7] as String?,
-      acceptingWaste: fields[8] as bool?,
+      isFirstTimeLoggedIn: fields[7] as bool,
+      fcmToken: fields[8] as String?,
     );
   }
 
@@ -48,9 +48,9 @@ class UserModelAdapter extends TypeAdapter<UserModel> {
       ..writeByte(6)
       ..write(obj.college)
       ..writeByte(7)
-      ..write(obj.fcmToken)
+      ..write(obj.isFirstTimeLoggedIn)
       ..writeByte(8)
-      ..write(obj.acceptingWaste);
+      ..write(obj.fcmToken);
   }
 
   @override

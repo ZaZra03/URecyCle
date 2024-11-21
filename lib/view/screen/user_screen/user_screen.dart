@@ -5,14 +5,19 @@ import 'package:urecycle_app/view/page/transaction_page.dart';
 import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
 import 'package:urecycle_app/view/page/qr_page.dart';
-import 'package:urecycle_app/view/screen/reward_screen.dart';
-import '../../services/binstate_service.dart';
+import 'package:urecycle_app/view/screen/user_screen/reward_screen.dart';
+import '../../../services/binstate_service.dart';
+import 'onboarding_screen.dart';
 
 class UserScreen extends StatefulWidget {
   final int initialPageIndex;
   final String role;
 
-  const UserScreen({super.key, this.initialPageIndex = 0, required this.role});
+  const UserScreen({
+    super.key,
+    this.initialPageIndex = 0,
+    required this.role,
+  });
 
   @override
   State<UserScreen> createState() => UserScreenState();
@@ -53,7 +58,6 @@ class UserScreenState extends State<UserScreen> {
     }
   }
 
-  // Setter for selected index
   void setSelectedIndex(int index) {
     setState(() {
       _selectedIndex = index;
@@ -72,17 +76,28 @@ class UserScreenState extends State<UserScreen> {
         ),
         automaticallyImplyLeading: false,
         backgroundColor: Constants.primaryColor,
-        actions: _selectedIndex == 0 // Display reward icon only on the Home page
+        actions: _selectedIndex == 0
             ? [
           IconButton(
             icon: const Icon(Icons.card_giftcard),
-            color: Colors.white, // Reward icon
+            color: Colors.white,
             onPressed: () {
-              // Navigate to the reward page
               Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => RewardScreen(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.help_outline), // Help icon
+            color: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const OnboardingScreen(),
                 ),
               );
             },
@@ -103,19 +118,11 @@ class UserScreenState extends State<UserScreen> {
           _isAcceptingWaste
               ? const QRScanner(role: 'student')
               : const SafeArea(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: Center(
-                    child: Text(
-                      'Recycling Bin Closed',
-                      style: TextStyle(fontSize: 18),
-                    ),
-                  ),
-                ),
-              ],
+            child: Center(
+              child: Text(
+                'Recycling Bin Closed',
+                style: TextStyle(fontSize: 18),
+              ),
             ),
           ),
           const Notifications(),
@@ -160,7 +167,7 @@ class UserScreenState extends State<UserScreen> {
                 setSelectedIndex(1);
               },
             ),
-            const SizedBox(width: 40), // Spacer for FAB
+            const SizedBox(width: 40),
             IconButton(
               icon: const Icon(Icons.notifications),
               color: _selectedIndex == 3 ? Colors.white : Constants.gray04Color,

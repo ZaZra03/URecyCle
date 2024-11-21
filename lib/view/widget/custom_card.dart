@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../constants.dart'; // Make sure this path is correct for your project
-
 class CustomCard extends StatelessWidget {
   final Widget child;
   final VoidCallback? onTap;
-  final Color backgroundColor; // Remove default value
+  final Color backgroundColor;
 
   const CustomCard({
     super.key,
     required this.child,
     this.onTap,
-    this.backgroundColor = Colors.white, // Use a fixed default color if none provided
+    this.backgroundColor = Colors.white,
   });
 
   @override
@@ -27,7 +25,7 @@ class CustomCard extends StatelessWidget {
             clipBehavior: Clip.hardEdge,
             elevation: 5,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            color: backgroundColor, // Use the background color here
+            color: backgroundColor,
             child: InkWell(
               splashColor: Colors.blue.withAlpha(30),
               onTap: onTap,

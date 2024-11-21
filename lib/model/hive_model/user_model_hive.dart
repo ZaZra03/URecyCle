@@ -26,10 +26,10 @@ class UserModel {
   final String? college;
 
   @HiveField(7)
-  final String? fcmToken;
+  final bool isFirstTimeLoggedIn;
 
   @HiveField(8)
-  final bool? acceptingWaste;
+  final String? fcmToken;
 
   UserModel({
     required this.email,
@@ -39,8 +39,8 @@ class UserModel {
     required this.role,
     required this.password,
     required this.college,
+    required this.isFirstTimeLoggedIn,
     this.fcmToken,
-    this.acceptingWaste,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -52,8 +52,8 @@ class UserModel {
       role: json['role'],
       password: json['password'],
       college: json['college'],
+      isFirstTimeLoggedIn: json['isFirstTimeLoggedIn'],
       fcmToken: json['fcmToken'],
-      acceptingWaste: json['acceptingWaste'],
     );
   }
 
@@ -66,8 +66,8 @@ class UserModel {
       'role': role,
       'password': password,
       'college': college,
+      'isFirstTimeLoggedIn': isFirstTimeLoggedIn,
       'fcmToken': fcmToken,
-      'acceptingWaste': acceptingWaste,
     };
   }
 }

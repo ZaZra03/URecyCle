@@ -64,7 +64,7 @@ class DisposalService {
   }
 
   // Fetch weekly disposals
-  Future<List<dynamic>> fetchWeeklyDisposals() async {
+  Future<List<Disposal>> fetchWeeklyDisposals() async {
     try {
       String? token = await AuthService.getToken();
       if (token == null) {
@@ -77,10 +77,14 @@ class DisposalService {
           'Authorization': 'Bearer $token',
         },
       );
+      print("Raw API Response: ${response.body}");
+
 
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body); // The weekly disposals data
-        return data;
+        List<Disposal> disposals = data.map((json) => Disposal.fromJson(json)).toList();
+        print("Mapped Disposals: $disposals");
+        return disposals;
       } else {
         throw Exception('Failed to fetch weekly disposals: ${response.body}');
       }

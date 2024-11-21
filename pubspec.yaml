@@ -31,6 +31,8 @@ dependencies:
   google_mlkit_image_labeling: ^0.13.0
   path: ^1.9.0
   connectivity_plus: ^6.1.0
+  smooth_page_indicator: ^1.2.0+3
+  pdf: ^3.11.1
 
 dev_dependencies:
   flutter_test:
@@ -50,8 +52,7 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
   assets:
-    - assets/icon/logo.png
-    - assets/images/SGD_12.png
-    - assets/images/MNV.jpg
+    - assets/icon/
+    - assets/images/
     - assets/models/
     - assets/labels/

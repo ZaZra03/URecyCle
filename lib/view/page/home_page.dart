@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import '../../provider/user_provider.dart';
 import '../../utils/navigation_utils.dart';
 import '../screen/leaderboard_screen.dart';
-import '../screen/mission_vision_screen.dart';
-import '../screen/sdg_screen.dart';
-import '../screen/user_screen.dart';
+import '../screen/user_screen/mission_vision_screen.dart';
+import '../screen/user_screen/sdg_screen.dart';
+import '../screen/user_screen/user_screen.dart';
 import '../widget/leaderboard_card.dart';
 
 class Home extends StatefulWidget {

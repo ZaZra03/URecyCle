@@ -31,6 +31,7 @@ class HiveService {
       Hive.openBox<int>('totaldisposalBox'),
       Hive.openBox<LeaderboardEntry>('userlbBox'),
       Hive.openBox<List<LeaderboardEntry>>('leaderboardBox'),
+      Hive.openBox<List<LeaderboardEntry>>('top3lbBox'),
       Hive.openBox<List<dynamic>>('notificationBox'), // Consider specifying a type if possible
       Hive.openBox<RewardModel>('rewardBox'),
       Hive.openBox<List<TransactionModel>>('transactionBox'),
@@ -58,6 +59,7 @@ class HiveService {
   Box<int> get totaldisposalBox => Hive.box<int>('totaldisposalBox');
   Box<BinStateModel> get binBox => Hive.box<BinStateModel>('binBox');
   Box<List<LeaderboardEntry>> get leaderboardBox => Hive.box<List<LeaderboardEntry>>('leaderboardBox');
+  Box<List<LeaderboardEntry>> get top3lbBox => Hive.box<List<LeaderboardEntry>>('top3lbBox');
   Box<RewardModel> get rewardBox => Hive.box<RewardModel>('rewardBox');
 
 }

@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../constants.dart';
-import '../../provider/user_provider.dart';
+import '../../../constants.dart';
+import '../../../provider/user_provider.dart';
 
 class RewardScreen extends StatelessWidget {
   RewardScreen({super.key});

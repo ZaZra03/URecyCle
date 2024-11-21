@@ -4,8 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:urecycle_app/constants.dart';
 import '../model/hive_model/user_model_hive.dart';
-import 'hive_service.dart';
-
 
 class AuthService {
   // Store token locally in shared preferences

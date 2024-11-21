@@ -3,14 +3,12 @@ import 'package:provider/provider.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/view/widget/auth_textfield.dart';
 import 'package:urecycle_app/services/auth_service.dart';
-import 'package:urecycle_app/view/screen/user_screen.dart';
-import 'package:urecycle_app/view/screen/admin_screen.dart';
+import 'package:urecycle_app/view/screen/user_screen/user_screen.dart';
+import 'package:urecycle_app/view/screen/admin_screen/admin_screen.dart';
 import 'package:urecycle_app/view/widget/loading_widget.dart';
-import '../../model/hive_model/user_model_hive.dart';
 import '../../provider/admin_provider.dart';
 import '../../provider/user_provider.dart';
-import '../../services/hive_service.dart';
-
+import 'user_screen/onboarding_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -38,6 +36,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
         final user = responseData['user'];
         final String role = user['role'];
+        final bool isFirstTimeLoggedIn = user['isFirstTimeLoggedIn'];
+        print(isFirstTimeLoggedIn);
 
         if (role == 'admin') {
           final adminProvider = Provider.of<AdminProvider>(context, listen: false);
@@ -76,11 +76,21 @@ class _LoginScreenState extends State<LoginScreen> {
 
           if (!mounted) return;
 
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const UserScreen(role: 'student')),
-                (Route<dynamic> route) => false,
-          );
+          if(isFirstTimeLoggedIn){
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const OnboardingScreen()),
+                  (Route<dynamic> route) => false,
+            );
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const UserScreen(role: 'student')),
+                  (Route<dynamic> route) => false,
+            );
+          }
+
+
         } else {
           throw Exception('Invalid role');
         }

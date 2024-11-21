@@ -115,7 +115,7 @@ class LeaderboardService {
   }
 
   // Add points to a specific leaderboard entry by student number
-  Future<void> addPointsToUser(String studentNumber) async {
+  Future<void> addPointsToUser(String studentNumber, int pointsToAdd) async {
     final Uri addPointsUri = Uri.parse('${Constants.leaderboard}/$studentNumber/add-points');
     print('Add Points URL: $addPointsUri'); // Debugging
 
@@ -128,18 +128,20 @@ class LeaderboardService {
       final response = await http.post(
         addPointsUri,
         headers: <String, String>{
+          'Authorization': 'Bearer $token', // Add Authorization Bearer token
           'Content-Type': 'application/json; charset=UTF-8',
-          'Authorization': 'Bearer $token',
         },
         body: jsonEncode(<String, dynamic>{
-          // Add the fixed points here if required by the backend
+          'pointsToAdd': pointsToAdd, // Passing the points to add to the backend
         }),
       );
 
       print('Add Points Response Status Code: ${response.statusCode}');
       print('Add Points Response Body: ${response.body}');
 
-      if (response.statusCode != 200) {
+      if (response.statusCode == 200) {
+        print('Points added successfully');
+      } else {
         final Map<String, dynamic> errorResponse = jsonDecode(response.body);
         final String errorMessage = errorResponse['error'] ?? 'Failed to add points';
         throw Exception(errorMessage);

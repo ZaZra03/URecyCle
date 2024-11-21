@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:hive/hive.dart';
 import 'package:provider/provider.dart';
 import 'package:urecycle_app/provider/admin_provider.dart';
-import 'package:urecycle_app/services/auth_service.dart';
 import 'package:urecycle_app/services/firebase_service.dart';
 import 'package:urecycle_app/services/hive_service.dart';
-import 'package:urecycle_app/view/screen/admin_screen.dart';
-import 'package:urecycle_app/view/screen/user_screen.dart';
-import 'model/hive_model/user_model_hive.dart';
+import 'package:urecycle_app/view/screen/admin_screen/admin_screen.dart';
+import 'package:urecycle_app/view/screen/user_screen/user_screen.dart';
 import 'view/screen/login_screen.dart';
 import 'provider/user_provider.dart';
 import 'package:firebase_core/firebase_core.dart';
