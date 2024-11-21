@@ -5,7 +5,7 @@ import '../screen/admin_screen/userslist_screen.dart';
 import '../screen/admin_screen/visual_screen.dart';
 import '../widget/custom_card.dart';
 import '../screen/admin_screen/register_screen.dart';
-import '../screen/leaderboard_screen.dart';
+import '../screen/admin_screen/leaderboard_screen.dart';
 import '../../services/binstate_service.dart';
 
 class Dashboard extends StatefulWidget {

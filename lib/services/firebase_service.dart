@@ -81,7 +81,7 @@ class FirebaseApi {
         'Authorization': 'Bearer $token',
       },
     );
-
+    print(response.statusCode);
     if (response.statusCode == 200) {
 
       return json.decode(response.body) as List<dynamic>;

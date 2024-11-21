@@ -31,19 +31,20 @@ class FAQ extends StatelessWidget {
             const SizedBox(height: 20),
             _buildFAQItem(
               context,
-              'What is this app about?',
-              'This app helps you manage tasks efficiently and provides personalized features tailored to your needs.',
+              'What is URecyCle?',
+              'URecyCle is an innovative app designed to promote recycling and sustainable waste management at University of Cabuyao. It helps users track recycling efforts, view leaderboards, and access waste disposal analytics.',
             ),
             _buildFAQItem(
               context,
-              'How do I update my profile?',
-              'Go to the "Account Info" section in your profile to update your details easily.',
+              'How do I scan items for recycling?',
+              'Go to the Scan page by tapping the round button at the bottom of the screen. Then, scan the QR code located in the bin areas and use the scanner to identify recyclable items.',
             ),
             _buildFAQItem(
               context,
-              'Who can use this app?',
-              'This app is suitable for anyone looking for an intuitive and reliable task management tool.',
+              'Who can use URecyCle?',
+              'URecyCle is for enrolled students of University of Cabuyao aiming to make a positive environmental impact through better waste management practices.',
             ),
+
           ],
         ),
       ),

@@ -31,10 +31,10 @@ class AboutUs extends StatelessWidget {
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Text(
-                  'Welcome to our app! Our goal is to simplify your tasks while ensuring you enjoy a seamless and user-friendly experience. '
-                      'We are committed to delivering innovative solutions tailored to your needs.\n\n'
-                      'For any inquiries or support, please contact us at:\n\n'
-                      '📧 Email: support@yourapp.com\n'
+                  'Welcome to URecyCle! Our mission is to inspire sustainable living by making recycling accessible, engaging, and rewarding. '
+                      'Through innovative features like real-time waste tracking, leaderboards, and analytics, we aim to encourage responsible waste disposal.\n\n'
+                      'For inquiries or support, please contact us at:\n\n'
+                      '📧 Email: support@urecycle.com\n'
                       '📞 Phone: +123-456-7890\n',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     height: 1.5,

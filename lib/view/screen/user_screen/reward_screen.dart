@@ -10,7 +10,7 @@ class RewardScreen extends StatelessWidget {
 
   final List<Map<String, dynamic>> rewards = [
     {'name': 'Snack', 'points': 1, 'image': Icons.fastfood, 'available': true},
-    {'name': 'CP Load 50', 'points': 200, 'image': Icons.phone_android, 'available': false},
+    {'name': 'CP Load 50', 'points': 20000, 'image': Icons.phone_android, 'available': false},
   ];
 
   @override

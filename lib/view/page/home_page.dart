@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/user_provider.dart';
 import '../../utils/navigation_utils.dart';
-import '../screen/leaderboard_screen.dart';
+import '../screen/user_screen/leaderboard_screen.dart';
 import '../screen/user_screen/mission_vision_screen.dart';
 import '../screen/user_screen/sdg_screen.dart';
 import '../screen/user_screen/user_screen.dart';
