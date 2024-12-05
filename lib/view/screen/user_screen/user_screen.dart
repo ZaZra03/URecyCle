@@ -5,6 +5,7 @@ import 'package:urecycle_app/view/page/transaction_page.dart';
 import 'package:urecycle_app/view/page/notification_page.dart';
 import 'package:urecycle_app/view/page/profile_page.dart';
 import 'package:urecycle_app/view/page/qr_page.dart';
+import 'package:urecycle_app/view/screen/user_screen/recycleditems_screen.dart';
 import 'package:urecycle_app/view/screen/user_screen/reward_screen.dart';
 import '../../../services/binstate_service.dart';
 import 'onboarding_screen.dart';
@@ -26,7 +27,8 @@ class UserScreen extends StatefulWidget {
 class UserScreenState extends State<UserScreen> {
   late PageController pageController;
   late int _selectedIndex;
-  bool _isAcceptingWaste = false;
+  bool _isBinStatesLoaded = false;
+  Map<String, bool> _binStates = {};
 
   final Map<int, String> pageTitles = {
     0: 'Home',
@@ -41,21 +43,83 @@ class UserScreenState extends State<UserScreen> {
     super.initState();
     _selectedIndex = widget.initialPageIndex;
     pageController = PageController(initialPage: _selectedIndex);
-    _fetchBinState();
   }
 
-  Future<void> _fetchBinState() async {
+  Future<void> _loadBinStates() async {
     try {
+      print("Fetching bin states...");
       BinStateService binStateService = BinStateService();
-      bool? isAcceptingWaste = await binStateService.getAcceptingWasteStatus();
-      if (isAcceptingWaste != null) {
+      final binStates = await binStateService.getAllBinStates();
+      print("Bin states fetched: $binStates");
+      if (binStates != null) {
         setState(() {
-          _isAcceptingWaste = isAcceptingWaste;
+          _binStates = binStates;
+          _isBinStatesLoaded = true;
+        });
+      } else {
+        print("Bin states are null.");
+        setState(() {
+          _isBinStatesLoaded = false;
         });
       }
     } catch (e) {
-      print('Error fetching bin state: $e');
+      print("Error loading bin states: $e");
+      setState(() {
+        _isBinStatesLoaded = false;
+      });
     }
+  }
+
+  void _showBinStatesDialog() async {
+    // Call _loadBinStates only when the info icon is pressed
+    await _loadBinStates();
+
+    // Prepare the list of bin status messages based on the current bin states
+    List<Widget> binStateWidgets = [];
+
+    _binStates.forEach((binType, isOpen) {
+      String statusMessage = '$binType Bin ${isOpen ? 'Open' : 'Closed'}';
+      binStateWidgets.add(
+        ListTile(
+          title: Text(statusMessage),
+          trailing: Icon(
+            isOpen ? Icons.check_circle : Icons.cancel_outlined,
+            color: isOpen ? Colors.green : Colors.red,
+          ),
+        ),
+      );
+    });
+
+    // Check if the widget is still mounted before calling showDialog
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Bin States'),
+            content: _isBinStatesLoaded
+                ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: binStateWidgets,
+            )
+                : const Center(child: CircularProgressIndicator()),
+            actions: <Widget>[
+              TextButton(
+                child: const Text('OK'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
+
+  bool _areAllBinsClosed() {
+    // Return true if all bin states are false (closed), or if the states are not yet loaded
+    return _isBinStatesLoaded && _binStates.values.every((isOpen) => !isOpen);
   }
 
   void setSelectedIndex(int index) {
@@ -103,6 +167,26 @@ class UserScreenState extends State<UserScreen> {
             },
           ),
         ]
+            : _selectedIndex == 2
+            ? [
+          IconButton(
+            icon: const Icon(Icons.info_outline), // Info icon
+            color: Colors.white,
+            onPressed: _showBinStatesDialog,
+          ),
+          IconButton(
+            icon: const Icon(Icons.help_outline), // Help icon
+            color: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const RecyclingItemsScreen(),
+                ),
+              );
+            },
+          ),
+        ]
             : [],
       ),
       body: PageView(
@@ -111,36 +195,39 @@ class UserScreenState extends State<UserScreen> {
           setState(() {
             _selectedIndex = index;
           });
+
+          if (index == 2 && !_isBinStatesLoaded) {
+            _loadBinStates(); // Load bin states when navigating to Scan
+          }
         },
         children: [
           const Home(),
           const Transaction(),
-          _isAcceptingWaste
-              ? const QRScanner(role: 'student')
-              : const SafeArea(
+          _isBinStatesLoaded
+              ? (_areAllBinsClosed()
+              ? const SafeArea(
             child: Center(
               child: Text(
                 'Recycling Bin Closed',
                 style: TextStyle(fontSize: 18),
               ),
             ),
-          ),
+          )
+              : QRScanner(role: 'student', binStates: _binStates,))
+              : const Center(child: CircularProgressIndicator()), // Show loader until states are loaded
           const Notifications(),
           const Profile(role: 'student'),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          _fetchBinState();
           setState(() {
             _selectedIndex = 2;
             pageController.jumpToPage(2);
           });
         },
         backgroundColor: Constants.primary02Color,
-        foregroundColor: _selectedIndex == 2
-            ? Colors.white
-            : Constants.gray04Color,
+        foregroundColor: _selectedIndex == 2 ? Colors.white : Constants.gray04Color,
         shape: const CircleBorder(),
         child: const Icon(Icons.qr_code),
       ),

@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:urecycle_app/view/page/scan_page.dart';
 import '../../services/leaderboard_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class QRScanner extends StatefulWidget {
   final String role;
+  final Map<String, bool> binStates;
 
-  const QRScanner({super.key, required this.role});
+  const QRScanner({super.key, required this.role, this.binStates = const {}});
 
   @override
   State<QRScanner> createState() => _QRScannerState();
@@ -16,14 +18,15 @@ class QRScanner extends StatefulWidget {
 class _QRScannerState extends State<QRScanner> {
   final MobileScannerController controller = MobileScannerController(
     formats: const [BarcodeFormat.qrCode],
-    // detectionSpeed: DetectionSpeed.noDuplicates,
   );
 
   bool _isProcessing = false;
 
   @override
   void initState() {
+    print('QRScanner binStates: ${widget.binStates}');
     super.initState();
+    _checkAndResetFlagIfNecessary();
     controller.start();
   }
 
@@ -44,19 +47,75 @@ class _QRScannerState extends State<QRScanner> {
     controller.stop();
 
     if (widget.role == 'student') {
-      if (scannedCode == 'URECYCLE') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const Scan(),
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final lastScanTime = prefs.getInt('lastScanTime') ?? 0;
+      final scannedNonTrash = prefs.getBool('lastScannedNonTrash') ?? false;
+
+      // Get the current timestamp
+      final currentTime = DateTime.now().millisecondsSinceEpoch;
+
+      // Cooldown duration in milliseconds
+      const int cooldownDurationMs = 5 * 60 * 1000;
+
+      // Check if the cooldown is still active
+      if (scannedNonTrash && currentTime - lastScanTime < cooldownDurationMs) {
+        final remainingTime = ((cooldownDurationMs - (currentTime - lastScanTime)) ~/ 60000);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please wait $remainingTime minute(s) before scanning again.'),
           ),
-        ).then((_) {
-          // Restart scanner when returning to the page
-          controller.start();
-          setState(() {
-            _isProcessing = false; // Reset the processing flag after navigation
-          });
+        );
+
+        // Reset processing state and restart scanner
+        setState(() {
+          _isProcessing = false;
         });
+        controller.start();
+        return;
+      }
+
+      await prefs.setInt('lastScanTime', currentTime);
+
+      // Check if scannedCode matches one of the valid bin types
+      const validCodes = ['Plastic', 'Metal', 'Glass', 'Cardboard', 'Paper'];
+      if (validCodes.contains(scannedCode)) {
+        if (widget.binStates[scannedCode] == true) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => Scan(scannedCategory: scannedCode),
+            ),
+          ).then((_) {
+            controller.start();
+            setState(() {
+              _isProcessing = false;
+            });
+          });
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('$scannedCode bin is closed.'),
+            ),
+          );
+
+          // Reset processing state and restart scanner
+          setState(() {
+            _isProcessing = false;
+          });
+          controller.start();
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Invalid QR code scanned.'),
+          ),
+        );
+
+        // Reset processing state and restart scanner
+        setState(() {
+          _isProcessing = false;
+        });
+        controller.start();
       }
     } else if (widget.role == 'admin') {
       final leaderboardService = LeaderboardService();
@@ -79,13 +138,11 @@ class _QRScannerState extends State<QRScanner> {
       } finally {
         controller.start(); // Restart scanner
         setState(() {
-          _isProcessing = false; // Reset the processing flag after completion
+          _isProcessing = false; // Reset processing flag after completion
         });
       }
     }
   }
-
-
 
   Future<void> _showRewardDetails(BuildContext context, String name, int points) {
     return showDialog(
@@ -98,7 +155,7 @@ class _QRScannerState extends State<QRScanner> {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
-                // Restart the scanner after closing the dialog to scan the same code again
+                // Restart the scanner after closing the dialog
                 controller.start();
               },
               child: const Text('Close'),
@@ -109,6 +166,19 @@ class _QRScannerState extends State<QRScanner> {
     );
   }
 
+  void _checkAndResetFlagIfNecessary() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastScanTime = prefs.getInt('lastScanTime') ?? 0;
+    final currentTime = DateTime.now().millisecondsSinceEpoch;
+
+    // Cooldown duration in milliseconds
+    const int cooldownDurationMs = 5 * 60 * 1000;
+
+    // Reset the flag only if cooldown has elapsed
+    if (currentTime - lastScanTime > cooldownDurationMs) {
+      await prefs.setBool('lastScannedNonTrash', false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

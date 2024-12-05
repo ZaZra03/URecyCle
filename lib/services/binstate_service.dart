@@ -4,64 +4,65 @@ import '../services/auth_service.dart';
 import '../constants.dart';
 
 class BinStateService {
-  // Method to toggle waste acceptance
-  Future<void> toggleWasteAcceptance(bool isAcceptingWaste) async {
+  // Fetch all bin states
+  Future<Map<String, bool>?> getAllBinStates() async {
     try {
       String? token = await AuthService.getToken();
-      if (token == null) {
-        throw Exception('No token found');
-      }
-
-      final response = await http.patch(
-        Uri.parse(Constants.binstate),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({
-          'acceptingWaste': isAcceptingWaste,  // Send the updated waste status
-        }),
-      );
-
-      if (response.statusCode != 200) {
-        print('Response status: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        throw Exception('Failed to update accepting waste status');
-      }
-
-      print('Waste acceptance status updated successfully');
-    } catch (e) {
-      print("Error toggling waste acceptance: $e");
-    }
-  }
-
-  // Method to fetch the current waste acceptance status
-  Future<bool?> getAcceptingWasteStatus() async {
-    try {
-      String? token = await AuthService.getToken();
-      if (token == null) {
-        throw Exception('No token found');
-      }
+      if (token == null) throw Exception('No token found');
 
       final response = await http.get(
-        Uri.parse(Constants.binstate),  // Assumes the same endpoint is used to GET the status
+        Uri.parse(Constants.allBinStates), // Endpoint to fetch all bin states
         headers: {
           'Authorization': 'Bearer $token',
         },
       );
 
       if (response.statusCode == 200) {
-        // Decode the JSON response
         final data = jsonDecode(response.body);
-        return data['acceptingWaste'] as bool?;  // Return the acceptingWaste status
+        if (data['status'] == true) {
+          final binStates = (data['binStates'] as List).asMap().map(
+                (index, bin) => MapEntry(bin['binType'], bin['acceptingWaste']),
+          );
+          return binStates.map((key, value) => MapEntry(key, value as bool));
+        } else {
+          throw Exception('Failed to fetch bin states');
+        }
       } else {
-        print('Response status: ${response.statusCode}');
-        print('Response body: ${response.body}');
-        throw Exception('Failed to fetch accepting waste status');
+        throw Exception('Failed to fetch bin states');
       }
     } catch (e) {
-      print('Error fetching waste acceptance status: $e');
+      print('Error fetching bin states: $e');
       return null;
+    }
+  }
+
+  // Toggle a specific bin state
+  Future<void> toggleBinState(String binType, bool state) async {
+    try {
+      String? token = await AuthService.getToken();
+      if (token == null) throw Exception('No token found');
+
+      final response = await http.patch(
+        Uri.parse(Constants.toggleBinState), // Endpoint to toggle bin state
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'binType': binType, 'acceptingWaste': state}),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == true) {
+          print('$binType state updated successfully to $state');
+        } else {
+          throw Exception('Failed to toggle bin state');
+        }
+      } else {
+        throw Exception('Failed to toggle bin state');
+      }
+    } catch (e) {
+      print('Error toggling bin state for $binType: $e');
     }
   }
 }

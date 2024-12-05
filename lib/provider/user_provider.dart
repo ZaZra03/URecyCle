@@ -5,11 +5,19 @@ import 'package:urecycle_app/services/leaderboard_service.dart';
 import '../model/hive_model/leaderboard_model_hive.dart';
 import '../model/hive_model/transaction_model_hive.dart';
 import '../model/hive_model/user_model_hive.dart';
+import '../services/binstate_service.dart';
 import '../services/hive_service.dart';
 import '../services/transaction_service.dart';
 import '../services/disposal_service.dart';
 
 class UserProvider with ChangeNotifier {
+  Map<String, bool> _binStates = {
+    'Plastic': false,
+    'Paper': false,
+    'Glass': false,
+    'Metal': false,
+    'Cardboard': false,
+  };
   UserModel? _user;
   LeaderboardEntry? _lbUser;
   List<LeaderboardEntry> _leaderboards = [];
@@ -20,6 +28,7 @@ class UserProvider with ChangeNotifier {
   int _totalDisposals = 0;
 
   // Getters
+  Map<String, bool> get binStates => _binStates;
   UserModel? get user => _user;
   LeaderboardEntry? get lbUser => _lbUser;
   List<LeaderboardEntry> get leaderboards => _leaderboards;
@@ -33,6 +42,7 @@ class UserProvider with ChangeNotifier {
   final TransactionService _transactionService = TransactionService();
   final LeaderboardService _leaderboardService = LeaderboardService();
   final DisposalService _disposalService = DisposalService();
+  final BinStateService _binStateService = BinStateService();
   final FirebaseApi _firebaseApi = FirebaseApi();
 
   // Hive boxes
@@ -159,6 +169,19 @@ class UserProvider with ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  // Fetch bin states from the backend
+  Future<void> fetchBinStates() async {
+    try {
+      final fetchedBinStates = await _binStateService.getAllBinStates();
+      if (fetchedBinStates != null) {
+        _binStates = fetchedBinStates;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error fetching bin states: $e');
+    }
   }
 
   // Fetch total disposals and store in Hive

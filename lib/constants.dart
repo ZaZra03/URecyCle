@@ -29,5 +29,6 @@ class Constants {
   static const totalDisposals = '${url}total-disposal';
   static const allDisposals = '${url}all-disposal';
   static const weeklyDisposals = '${url}weekly-disposal';
-  static const binstate = '${url}binstate';
+  static const allBinStates = '${url}binstate';
+  static const toggleBinState = '${url}binstate';
 }

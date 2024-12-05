@@ -6,14 +6,14 @@ import '../../../constants.dart';
 import '../../../model/hive_model/leaderboard_model_hive.dart';
 import '../../../view/widget/leaderboard_position2.dart';
 
-class LeaderboardPage extends StatefulWidget {
-  const LeaderboardPage({super.key});
+class LeaderboardScreen extends StatefulWidget {
+  const LeaderboardScreen({super.key});
 
   @override
-  State createState() => _LeaderboardPageState();
+  State createState() => _LeaderboardScreenState();
 }
 
-class _LeaderboardPageState extends State<LeaderboardPage> {
+class _LeaderboardScreenState extends State<LeaderboardScreen> {
   final LeaderboardService _leaderboardService = LeaderboardService();
   List<LeaderboardEntry>? _leaderboardEntries;
   List<LeaderboardEntry>? _top3Entries;

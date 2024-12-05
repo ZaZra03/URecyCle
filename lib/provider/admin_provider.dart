@@ -15,7 +15,13 @@ import '../services/user_service.dart';
 
 class AdminProvider with ChangeNotifier {
   // State variables
-  bool _isAcceptingWaste = false;
+  Map<String, bool> _binStates = {
+    'Plastic': false,
+    'Paper': false,
+    'Glass': false,
+    'Metal': false,
+    'Cardboard': false,
+  };
   UserModel? _user;
   List<UserModel> _users = [];
   List<LeaderboardEntry> _leaderboards = [];
@@ -38,9 +44,9 @@ class AdminProvider with ChangeNotifier {
   final Box _disposalBox = HiveService().disposalBox;
 
   // Getters
+  Map<String, bool> get binStates => _binStates;
   UserModel? get user => _user;
   List<UserModel> get users => _users;
-  bool get isAcceptingWaste => _isAcceptingWaste;
   List<LeaderboardEntry> get leaderboards => _leaderboards;
   List<LeaderboardEntry> get top3Users => _top3Users;
   List<Disposal> get weeklyDisposals => _weeklyDisposals;
@@ -50,6 +56,7 @@ class AdminProvider with ChangeNotifier {
   AdminProvider() {
     _firebaseApi.initNotifications();
     fetchAdminData();
+    fetchBinStates();
   }
 
   // Network connectivity checker
@@ -58,12 +65,28 @@ class AdminProvider with ChangeNotifier {
     return connectivityResult == ConnectivityResult.wifi || connectivityResult == ConnectivityResult.mobile;
   }
 
+  // void updateBinStates(Map<String, bool> newBinStates) {
+  //   _binStates = newBinStates;
+  //   notifyListeners();
+  // }
+
   // Fetch admin data
   Future<void> fetchAdminData() async {
     try {
+      // Fetch user data
       _user = await fetchUserData(Uri.parse(Constants.user));
-      _isAcceptingWaste = await _binStateService.getAcceptingWasteStatus() ?? false;
-      await _userBox.put('user', _user!);
+
+      // Fetch initial bin states
+      final fetchedBinStates = await _binStateService.getAllBinStates();
+      if (fetchedBinStates != null) {
+        _binStates = fetchedBinStates;
+      }
+
+      // Save user to Hive
+      if (_user != null) {
+        await _userBox.put('user', _user!);
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading admin data: $e');
@@ -82,8 +105,6 @@ class AdminProvider with ChangeNotifier {
 
   // Fetch leaderboard entries
   Future<void> fetchLeaderboardEntries() async {
-    notifyListeners();
-
     if (await _isConnected()) {
       try {
         final leaderboardEntries = await _leaderboardService.fetchLeaderboardEntries();
@@ -132,21 +153,31 @@ class AdminProvider with ChangeNotifier {
         : totals.map((key, value) => MapEntry(key, (value / total) * 100));
   }
 
-  // Toggle waste acceptance
-  Future<void> toggleWasteAcceptance() async {
-    final updatedStatus = !_isAcceptingWaste;
-    final title = 'URecyCle';
-    final body = updatedStatus
-        ? 'Recycling Bin Ready: It\'s time to drop off your recyclables!'
-        : 'Recycling Bin Closed: Please wait for the next cycle.';
-
+  // Fetch bin states from the backend
+  Future<void> fetchBinStates() async {
     try {
-      await _binStateService.toggleWasteAcceptance(updatedStatus);
-      _isAcceptingWaste = updatedStatus;
-      await _firebaseApi.sendNotificationToAllUsers(title: title, body: body);
+      final fetchedBinStates = await _binStateService.getAllBinStates();
+      if (fetchedBinStates != null) {
+        _binStates = fetchedBinStates;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Error fetching bin states: $e');
+    }
+  }
+
+  // Toggle a specific bin state
+  Future<void> toggleBinState(String binType) async {
+    try {
+      final currentState = _binStates[binType] ?? false;
+      final updatedState = !currentState;
+
+      await _binStateService.toggleBinState(binType, updatedState);
+
+      _binStates[binType] = updatedState;
       notifyListeners();
     } catch (e) {
-      debugPrint('Error toggling waste acceptance: $e');
+      debugPrint('Error toggling bin state for $binType: $e');
     }
   }
 
@@ -158,7 +189,13 @@ class AdminProvider with ChangeNotifier {
     _top3Users = [];
     _weeklyDisposals = [];
     _wasteTypePercentages = {};
-    _isAcceptingWaste = false;
+    _binStates = {
+      'Plastic': false,
+      'Paper': false,
+      'Glass': false,
+      'Metal': false,
+      'Cardboard': false,
+    };
     notifyListeners();
   }
 }

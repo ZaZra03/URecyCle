@@ -6,6 +6,7 @@ import 'package:google_mlkit_image_labeling/google_mlkit_image_labeling.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:urecycle_app/constants.dart';
 import 'package:urecycle_app/services/leaderboard_service.dart';
 import 'package:urecycle_app/services/transaction_service.dart';
@@ -22,7 +23,9 @@ import '../screen/user_screen/waste_screen/trash_screen.dart';
 import '../screen/user_screen/waste_screen/unknown_screen.dart';
 
 class Scan extends StatefulWidget {
-  const Scan({super.key});
+  final String scannedCategory;
+
+  const Scan({super.key, required this.scannedCategory});
 
   @override
   State createState() => _ScanState();
@@ -105,11 +108,13 @@ class _ScanState extends State<Scan> {
         setState(() {
           _classificationResult = 'No image selected.';
         });
+        _showNotification('No image selected.', isError: true);
         return;
       }
 
       // Set up model path and options
-      final modelPath = await getModelPath('assets/models/quantized_model_uint8.tflite');
+      final modelPath =
+          await getModelPath('assets/models/quantized_model_uint8.tflite');
       final options = LocalLabelerOptions(
         confidenceThreshold: 0.5,
         modelPath: modelPath,
@@ -124,14 +129,14 @@ class _ScanState extends State<Scan> {
           final maxScore = topLabel.confidence;
           final label = topLabel.label;
           final confidencePercentage = (maxScore * 100).toStringAsFixed(2);
-          print("Object detected is $label");
-          print("Max Score is $maxScore");
 
-          if (maxScore <= 0.45) {
+          if (maxScore <= 0.55) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const Unknown(result: 'Unknown')),
+              MaterialPageRoute(
+                  builder: (context) => const Unknown(result: 'Unknown')),
             );
+            _showNotification('Scan result: Unknown object.', isError: false);
           } else {
             setState(() {
               _classificationResult = label.trim();
@@ -144,20 +149,57 @@ class _ScanState extends State<Scan> {
               if (_classificationResult == 'Electronics') {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Electronics(result: _classificationResult, confidencePercentage: confidencePercentage,)),
+                  MaterialPageRoute(
+                    builder: (context) => Electronics(
+                      result: _classificationResult,
+                      confidencePercentage: confidencePercentage,
+                    ),
+                  ),
                 );
-              } else if (category != 'Trash') {
+                _showNotification('Scanned successfully! Electronics detected.', isError: false);
+              } else if (category == widget.scannedCategory) {
+                // If category matches the QR code, award points
                 await LeaderboardService().addPointsToUser(user.studentNumber, points);
                 await TransactionService().createTransaction(user.studentNumber, category, points);
 
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('lastScannedNonTrash', true);
+
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Recycle(result: _classificationResult, confidencePercentage: confidencePercentage, points: points, category: category,)),
+                  MaterialPageRoute(
+                    builder: (context) => Recycle(
+                      result: _classificationResult,
+                      confidencePercentage: confidencePercentage,
+                      points: points,
+                      category: category,
+                    ),
+                  ),
+                );
+                _showNotification(
+                  'Scanned successfully! +$points points for $category.',
+                  isError: false,
+                );
+              } else if (category == 'Trash') {
+                // If the item is categorized as Trash, navigate to the Trash screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => Trash(
+                      result: _classificationResult,
+                      confidencePercentage: confidencePercentage,
+                    ),
+                  ),
+                );
+                _showNotification(
+                  'Scanned successfully, but item is categorized as Trash.',
+                  isError: false,
                 );
               } else {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Trash(result: _classificationResult, confidencePercentage: confidencePercentage,)),
+                // If category does not match the QR code's scanned category, show a notification
+                _showNotification(
+                  'Item does not match the scanned category (${widget.scannedCategory}). No points awarded.',
+                  isError: true,
                 );
               }
             }
@@ -165,19 +207,35 @@ class _ScanState extends State<Scan> {
           await userProvider.fetchUserData();
           await userProvider.fetchTransactions();
           await userProvider.fetchTotalDisposals();
+        } else {
+          _showNotification('No labels detected. Please try again.',
+              isError: true);
         }
       }).catchError((e) {
         print('Error processing image: $e');
         setState(() {
           _classificationResult = 'Error occurred while processing.';
         });
+        _showNotification('Error processing image. Please try again.',
+            isError: true);
       });
     } catch (e) {
       print('Error: $e');
       setState(() {
         _classificationResult = 'Error occurred while processing.';
       });
+      _showNotification('Unexpected error occurred. Please try again.',
+          isError: true);
     }
+  }
+
+  void _showNotification(String message, {bool isError = false}) {
+    final snackBar = SnackBar(
+      content: Text(message),
+      backgroundColor: isError ? Colors.red : Colors.green,
+      duration: const Duration(seconds: 3),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   @override
@@ -196,7 +254,8 @@ class Trash extends StatelessWidget {
   final String result;
   final String confidencePercentage;
 
-  const Trash({super.key, required this.result, required this.confidencePercentage});
+  const Trash(
+      {super.key, required this.result, required this.confidencePercentage});
 
   @override
   Widget build(BuildContext context) {
@@ -255,8 +314,9 @@ class Trash extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
-                          (Route<dynamic> route) => false,
+                      MaterialPageRoute(
+                          builder: (context) => const UserScreen(role: 'user')),
+                      (Route<dynamic> route) => false,
                     );
                   },
                   child: Container(
@@ -285,7 +345,8 @@ class Trash extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const TrashScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const TrashScreen()),
                     );
                   },
                   child: Container(
@@ -316,7 +377,8 @@ class Electronics extends StatelessWidget {
   final String result;
   final String confidencePercentage;
 
-  const Electronics({super.key, required this.result, required this.confidencePercentage});
+  const Electronics(
+      {super.key, required this.result, required this.confidencePercentage});
 
   @override
   Widget build(BuildContext context) {
@@ -375,8 +437,9 @@ class Electronics extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
-                          (Route<dynamic> route) => false,
+                      MaterialPageRoute(
+                          builder: (context) => const UserScreen(role: 'user')),
+                      (Route<dynamic> route) => false,
                     );
                   },
                   child: Container(
@@ -405,7 +468,8 @@ class Electronics extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ElectronicsScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const ElectronicsScreen()),
                     );
                   },
                   child: Container(
@@ -488,8 +552,9 @@ class Unknown extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
-                          (Route<dynamic> route) => false,
+                      MaterialPageRoute(
+                          builder: (context) => const UserScreen(role: 'user')),
+                      (Route<dynamic> route) => false,
                     );
                   },
                   child: Container(
@@ -518,7 +583,8 @@ class Unknown extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const UnknownScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => const UnknownScreen()),
                     );
                   },
                   child: Container(
@@ -636,8 +702,9 @@ class Recycle extends StatelessWidget {
                   onTap: () {
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(builder: (context) => const UserScreen(role: 'user')),
-                          (Route<dynamic> route) => false,
+                      MaterialPageRoute(
+                          builder: (context) => const UserScreen(role: 'user')),
+                      (Route<dynamic> route) => false,
                     );
                   },
                   child: Container(
@@ -689,4 +756,3 @@ class Recycle extends StatelessWidget {
     );
   }
 }
-

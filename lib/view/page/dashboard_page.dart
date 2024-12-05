@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/admin_provider.dart';
+import '../screen/admin_screen/managebin_screen.dart';
 import '../screen/admin_screen/userslist_screen.dart';
 import '../screen/admin_screen/visual_screen.dart';
 import '../widget/custom_card.dart';
 import '../screen/admin_screen/register_screen.dart';
 import '../screen/admin_screen/leaderboard_screen.dart';
-import '../../services/binstate_service.dart';
+// import '../../services/binstate_service.dart';
 
 class Dashboard extends StatefulWidget {
   const Dashboard({super.key});
@@ -16,27 +17,25 @@ class Dashboard extends StatefulWidget {
 }
 
 class _DashboardState extends State<Dashboard> {
-  bool _isAcceptingWaste = false;
-
   @override
   void initState() {
     super.initState();
-    _fetchBinState();
+    // _fetchBinState();
   }
 
-  Future<void> _fetchBinState() async {
-    try {
-      BinStateService binStateService = BinStateService();
-      bool? isAcceptingWaste = await binStateService.getAcceptingWasteStatus();
-      if (isAcceptingWaste != null) {
-        setState(() {
-          _isAcceptingWaste = isAcceptingWaste;
-        });
-      }
-    } catch (e) {
-      print('Error fetching bin state: $e');
-    }
-  }
+  // Future<void> _fetchBinState() async {
+  //   try {
+  //     BinStateService binStateService = BinStateService();
+  //     Map<String, bool>? binStates = await binStateService.getAllBinStates(); // Fetch all bin states
+  //     if (binStates != null) {
+  //       setState(() {
+  //         Provider.of<AdminProvider>(context, listen: false).updateBinStates(binStates);
+  //       });
+  //     }
+  //   } catch (e) {
+  //     print('Error fetching bin states: $e');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -51,28 +50,24 @@ class _DashboardState extends State<Dashboard> {
         mainAxisSpacing: 8.0, // Spacing between rows
         children: <Widget>[
           CustomCard(
-            onTap: () async {
-              await adminProvider.toggleWasteAcceptance();
-              _fetchBinState(); // Refresh the bin state after toggling
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ManageBinScreen(),
+                ),
+              );
             },
-            backgroundColor: adminProvider.isAcceptingWaste ? Colors.green : Colors.red,
-            child: Column(
+            backgroundColor: Colors.white,
+            child: const Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  _isAcceptingWaste ? Icons.check_circle : Icons.cancel,
-                  size: 48.0,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 8.0),
-                Text(
-                  _isAcceptingWaste ? 'Accepting Waste' : 'Not Accepting',
-                  style: const TextStyle(fontSize: 16.0, color: Colors.white),
-                ),
+                Icon(Icons.recycling, size: 48.0, color: Colors.blue),
+                SizedBox(height: 8.0),
+                Text('Manage Bins', style: TextStyle(fontSize: 16.0)),
               ],
             ),
           ),
-          // Other cards remain unchanged
           CustomCard(
             onTap: () {
               Navigator.push(
@@ -136,7 +131,7 @@ class _DashboardState extends State<Dashboard> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const LeaderboardPage(),
+                  builder: (context) => const LeaderboardScreen(),
                 ),
               );
             },
