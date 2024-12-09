@@ -55,7 +55,7 @@ class _QRScannerState extends State<QRScanner> {
       final currentTime = DateTime.now().millisecondsSinceEpoch;
 
       // Cooldown duration in milliseconds
-      const int cooldownDurationMs = 5 * 60 * 1000;
+      const int cooldownDurationMs = 1 * 60 * 1000;
 
       // Check if the cooldown is still active
       if (scannedNonTrash && currentTime - lastScanTime < cooldownDurationMs) {

@@ -63,4 +63,60 @@ class TransactionService {
       throw Exception('Failed to fetch transactions: $e');
     }
   }
+
+  // Fetch transactions by waste type
+  Future<List<Map<String, dynamic>>> fetchTransactionsByWasteType(String wasteType) async {
+    final Uri wasteTypeTransactionsUri = Uri.parse('$createTransactionUri/$wasteType');
+
+    try {
+      String? token = await AuthService.getToken();  // Get the auth token
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        wasteTypeTransactionsUri,
+        headers: {
+          'Authorization': 'Bearer $token',  // Add authorization header
+        },
+      );
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data);
+      } else {
+        throw Exception('Failed to fetch transactions by waste type: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch transactions by waste type: $e');
+    }
+  }
+
+  // Fetch total points by waste type
+  Future<int> fetchTotalPointsByWasteType(String wasteType) async {
+    final Uri totalPointsUri = Uri.parse('$createTransactionUri/points/$wasteType');
+
+    try {
+      String? token = await AuthService.getToken();  // Get the auth token
+      if (token == null) {
+        throw Exception('No token found');
+      }
+
+      final response = await http.get(
+        totalPointsUri,
+        headers: {
+          'Authorization': 'Bearer $token',  // Add authorization header
+        },
+      );
+
+      if (response.statusCode == 200) {
+        Map<String, dynamic> data = jsonDecode(response.body);
+        return data['totalPoints'] ?? 0;  // Return totalPoints or 0 if not found
+      } else {
+        throw Exception('Failed to fetch total points by waste type: ${response.body}');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch total points by waste type: $e');
+    }
+  }
 }

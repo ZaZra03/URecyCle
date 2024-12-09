@@ -13,6 +13,39 @@ class Constants {
   static var gray03Color = const Color(0xFFBDBDBD);
   static var gray04Color = const Color(0xFF666666);
 
+  //Constant Variables
+  static const Map<String, String> categoryMapping = {
+    'Aluminum Cans': 'Metal',
+    'Cardboard Boxes': 'Cardboard',
+    'Disposable Plastic Cutlery': 'Plastic',
+    'Glass Containers': 'Glass',
+    'Organic Waste': 'Trash',
+    'Paper': 'Paper',
+    'Paper Cups': 'Paper',
+    'Plastic Bags': 'Plastic',
+    'Plastic Bottles': 'Plastic',
+    'Plastic Cups': 'Plastic',
+    'Plastic Food Containers': 'Plastic',
+    'Plastic Straws': 'Plastic',
+    'Styrofoam': 'Trash',
+  };
+
+  static const Map<String, int> pointsMapping = {
+    'Aluminum Cans': 15,
+    'Cardboard Boxes': 10,
+    'Disposable Plastic Cutlery': 3,
+    'Glass Containers': 20,
+    'Organic Waste': 0,
+    'Paper': 8,
+    'Paper Cups': 5,
+    'Plastic Bags': 2,
+    'Plastic Bottles': 10,
+    'Plastic Cups': 5,
+    'Plastic Food Containers': 8,
+    'Plastic Straws': 1,
+    'Styrofoam': 0,
+  };
+
   //Routes
   // static const url = 'https://urecycle-backend.onrender.com/';
   static const url = 'http://192.168.18.10:3000/';

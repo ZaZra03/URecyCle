@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../constants.dart';
 import '../../../provider/admin_provider.dart';
+import 'bindetail_screen.dart';
 
 class ManageBinScreen extends StatelessWidget {
   const ManageBinScreen({super.key});
@@ -135,43 +136,6 @@ class ManageBinScreen extends StatelessWidget {
             },
           );
         },
-      ),
-    );
-  }
-}
-
-class BinDetailsScreen extends StatelessWidget {
-  final String binId;
-
-  const BinDetailsScreen({super.key, required this.binId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Bin Details: $binId',
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Constants.primaryColor,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: Center(
-        child: Card(
-          elevation: 4,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          margin: const EdgeInsets.all(16.0),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(
-              'Details for bin: $binId',
-              style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.w600),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
       ),
     );
   }

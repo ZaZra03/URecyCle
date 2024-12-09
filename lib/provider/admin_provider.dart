@@ -12,6 +12,7 @@ import '../services/disposal_service.dart';
 import '../services/hive_service.dart';
 import '../services/leaderboard_service.dart';
 import '../services/user_service.dart';
+import '../services/transaction_service.dart';
 
 class AdminProvider with ChangeNotifier {
   // State variables
@@ -28,6 +29,8 @@ class AdminProvider with ChangeNotifier {
   List<LeaderboardEntry> _top3Users = [];
   List<Disposal> _weeklyDisposals = [];
   Map<String, double> _wasteTypePercentages = {};
+  List<Map<String, dynamic>> _transactionsByWasteType = [];
+  int _totalPointsByWasteType = 0;
 
   // Services
   final DisposalService _disposalService = DisposalService();
@@ -35,6 +38,7 @@ class AdminProvider with ChangeNotifier {
   final LeaderboardService _leaderboardService = LeaderboardService();
   final BinStateService _binStateService = BinStateService();
   final UserService _userService = UserService();
+  final TransactionService _transactionService = TransactionService();
 
   // Hive boxes
   final _userBox = HiveService().userBox;
@@ -52,6 +56,8 @@ class AdminProvider with ChangeNotifier {
   List<Disposal> get weeklyDisposals => _weeklyDisposals;
   Map<String, double> get wasteTypePercentages => _wasteTypePercentages;
   Map<String, int> get wasteTypeTotals => _calculateWasteTypeTotals(_weeklyDisposals);
+  List<Map<String, dynamic>> get transactionsByWasteType => _transactionsByWasteType;
+  int get totalPointsByWasteType => _totalPointsByWasteType;
 
   AdminProvider() {
     _firebaseApi.initNotifications();
@@ -62,31 +68,40 @@ class AdminProvider with ChangeNotifier {
   // Network connectivity checker
   Future<bool> _isConnected() async {
     final connectivityResult = await Connectivity().checkConnectivity();
-    return connectivityResult == ConnectivityResult.wifi || connectivityResult == ConnectivityResult.mobile;
+    return connectivityResult.contains(ConnectivityResult.wifi) || connectivityResult.contains(ConnectivityResult.mobile);
   }
 
-  // void updateBinStates(Map<String, bool> newBinStates) {
-  //   _binStates = newBinStates;
-  //   notifyListeners();
-  // }
+  // Fetch transactions by waste type
+  Future<void> fetchTransactionsByWasteType(String wasteType) async {
+    try {
+      _transactionsByWasteType = await _transactionService.fetchTransactionsByWasteType(wasteType);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error fetching transactions by waste type: $e');
+    }
+  }
+
+  // Fetch total points by waste type
+  Future<void> fetchTotalPointsByWasteType(String wasteType) async {
+    try {
+      _totalPointsByWasteType = await _transactionService.fetchTotalPointsByWasteType(wasteType);
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Error fetching total points by waste type: $e');
+    }
+  }
 
   // Fetch admin data
   Future<void> fetchAdminData() async {
     try {
-      // Fetch user data
       _user = await fetchUserData(Uri.parse(Constants.user));
-
-      // Fetch initial bin states
       final fetchedBinStates = await _binStateService.getAllBinStates();
       if (fetchedBinStates != null) {
         _binStates = fetchedBinStates;
       }
-
-      // Save user to Hive
       if (_user != null) {
         await _userBox.put('user', _user!);
       }
-
       notifyListeners();
     } catch (e) {
       debugPrint('Error loading admin data: $e');
@@ -120,7 +135,6 @@ class AdminProvider with ChangeNotifier {
       _leaderboards = _leaderboardBox.get('leaderboardEntries') ?? [];
       _top3Users = _top3lbBox.get('top3Users') ?? [];
     }
-
     notifyListeners();
   }
 
@@ -171,8 +185,13 @@ class AdminProvider with ChangeNotifier {
     try {
       final currentState = _binStates[binType] ?? false;
       final updatedState = !currentState;
+      const title = 'URecyCle';
+      final body = updatedState
+          ? '$binType Bin Ready: It\'s time to drop off your recyclables!'
+          : '$binType Bin Closed: Please wait for the next cycle.';
 
       await _binStateService.toggleBinState(binType, updatedState);
+      await _firebaseApi.sendNotificationToAllUsers(title: title, body: body);
 
       _binStates[binType] = updatedState;
       notifyListeners();
@@ -196,6 +215,8 @@ class AdminProvider with ChangeNotifier {
       'Metal': false,
       'Cardboard': false,
     };
+    _transactionsByWasteType = [];
+    _totalPointsByWasteType = 0;
     notifyListeners();
   }
 }
