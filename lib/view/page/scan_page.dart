@@ -95,7 +95,7 @@ class _ScanState extends State<Scan> {
           final confidencePercentage = (maxScore * 100).toStringAsFixed(2);
           print('The max score is: $maxScore');
 
-          if (maxScore <= 0.55) {
+          if (maxScore <= 0.75) {
             Navigator.push(
               context,
               MaterialPageRoute(

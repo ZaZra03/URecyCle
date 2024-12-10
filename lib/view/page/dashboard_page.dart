@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../provider/admin_provider.dart';
+import '../screen/admin_screen/binqr_screen.dart';
 import '../screen/admin_screen/managebin_screen.dart';
 import '../screen/admin_screen/userslist_screen.dart';
 import '../screen/admin_screen/visual_screen.dart';
@@ -142,6 +143,25 @@ class _DashboardState extends State<Dashboard> {
                 Icon(Icons.leaderboard, size: 48.0, color: Colors.blue),
                 SizedBox(height: 8.0),
                 Text('Leaderboards', style: TextStyle(fontSize: 16.0)),
+              ],
+            ),
+          ),
+          CustomCard(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const BinQRScreen(),
+                ),
+              );
+            },
+            backgroundColor: Colors.white,
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.qr_code, size: 48.0, color: Colors.blue),
+                SizedBox(height: 8.0),
+                Text('Bin QR\'s', style: TextStyle(fontSize: 16.0)),
               ],
             ),
           ),

@@ -136,6 +136,7 @@ class RewardScreen extends StatelessWidget {
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
+                userProvider.updatePoints(reward['points']);
                 _showQrCode(context, reward);
               },
               child: const Text('Redeem'),
@@ -180,7 +181,6 @@ class RewardScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () {
-                userProvider.notifyListeners();
                 Navigator.of(context).pop();
               },
               child: const Text('Close'),

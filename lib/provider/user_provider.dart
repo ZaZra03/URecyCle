@@ -222,6 +222,15 @@ class UserProvider with ChangeNotifier {
     }
   }
 
+  void updatePoints(int pointsSpent) {
+    if (_lbUser != null) {
+      _lbUser!.points -= pointsSpent;
+      // _userlbBox.put('lbUser', _lbUser!);
+      notifyListeners();
+    }
+  }
+
+
   // Reset all data in provider and clear Hive storage
   void reset() {
     _userBox.clear();

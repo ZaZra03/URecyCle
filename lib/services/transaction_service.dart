@@ -66,7 +66,7 @@ class TransactionService {
 
   // Fetch transactions by waste type
   Future<List<Map<String, dynamic>>> fetchTransactionsByWasteType(String wasteType) async {
-    final Uri wasteTypeTransactionsUri = Uri.parse('$createTransactionUri/$wasteType');
+    final Uri wasteTypeTransactionsUri = Uri.parse('$createTransactionUri/waste/$wasteType');
 
     try {
       String? token = await AuthService.getToken();  // Get the auth token
@@ -80,7 +80,7 @@ class TransactionService {
           'Authorization': 'Bearer $token',  // Add authorization header
         },
       );
-
+      print('Waste Type: ${response.statusCode}');
       if (response.statusCode == 200) {
         List<dynamic> data = jsonDecode(response.body);
         return List<Map<String, dynamic>>.from(data);
@@ -109,6 +109,7 @@ class TransactionService {
         },
       );
 
+      print('Total Points: ${response.statusCode}');
       if (response.statusCode == 200) {
         Map<String, dynamic> data = jsonDecode(response.body);
         return data['totalPoints'] ?? 0;  // Return totalPoints or 0 if not found

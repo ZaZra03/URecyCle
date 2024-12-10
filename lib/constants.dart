@@ -49,6 +49,7 @@ class Constants {
   //Routes
   // static const url = 'https://urecycle-backend.onrender.com/';
   static const url = 'http://192.168.18.10:3000/';
+  // static const url = 'http://172.16.203.7:3000/';
   static const register = '${url}register';
   static const login = '${url}login';
   static const leaderboard = '${url}leaderboard';

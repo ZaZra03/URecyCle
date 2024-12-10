@@ -14,7 +14,7 @@ class LeaderboardEntry {
   final String college;
 
   @HiveField(3)
-  final int points;
+  int points;
 
   LeaderboardEntry({
     required this.name,

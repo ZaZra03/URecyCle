@@ -67,7 +67,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
               ),
               pw.Divider(),
               if (_top3Entries != null && _top3Entries!.isNotEmpty) ...[
-                pw.Text('Top 3 Entries', style: pw.TextStyle(fontSize: 18)),
+                pw.Text('Top 3 Entries', style: const pw.TextStyle(fontSize: 18)),
                 pw.SizedBox(height: 10),
                 pw.Column(
                   children: _top3Entries!.asMap().entries.map((entry) {
@@ -77,7 +77,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       padding: const pw.EdgeInsets.only(bottom: 5),
                       child: pw.Text(
                         '$rank. ${leaderboardEntry.name} - ${leaderboardEntry.points} PTS',
-                        style: pw.TextStyle(fontSize: 14),
+                        style: const pw.TextStyle(fontSize: 14),
                       ),
                     );
                   }).toList(),
@@ -85,7 +85,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                 pw.SizedBox(height: 20),
               ],
               if (_leaderboardEntries != null && _leaderboardEntries!.isNotEmpty) ...[
-                pw.Text('Full Leaderboard', style: pw.TextStyle(fontSize: 18)),
+                pw.Text('Full Leaderboard', style: const pw.TextStyle(fontSize: 18)),
                 pw.SizedBox(height: 10),
                 pw.Column(
                   children: _leaderboardEntries!.asMap().entries.map((entry) {
@@ -95,7 +95,7 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
                       padding: const pw.EdgeInsets.only(bottom: 5),
                       child: pw.Text(
                         '$rank. ${leaderboardEntry.name} - ${leaderboardEntry.points} PTS',
-                        style: pw.TextStyle(fontSize: 14),
+                        style: const pw.TextStyle(fontSize: 14),
                       ),
                     );
                   }).toList(),
