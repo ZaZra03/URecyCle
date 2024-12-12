@@ -63,6 +63,7 @@ class _QRScannerState extends State<QRScanner> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Please wait $remainingTime minute(s) before scanning again.'),
+            behavior: SnackBarBehavior.floating,
           ),
         );
 
@@ -78,8 +79,11 @@ class _QRScannerState extends State<QRScanner> {
 
       // Check if scannedCode matches one of the valid bin types
       const validCodes = ['Plastic', 'Metal', 'Glass', 'Cardboard', 'Paper'];
-      if (validCodes.contains(scannedCode)) {
-        if (widget.binStates[scannedCode] == true) {
+      final scannedData = jsonDecode(scannedCode);
+      final binType = scannedData['binType'];
+
+      if (validCodes.contains(binType)) {
+        if (widget.binStates[binType] == true) {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -94,7 +98,8 @@ class _QRScannerState extends State<QRScanner> {
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('$scannedCode bin is closed.'),
+              content: Text('$binType bin is closed.'),
+              behavior: SnackBarBehavior.floating,
             ),
           );
 
@@ -108,6 +113,7 @@ class _QRScannerState extends State<QRScanner> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Invalid QR code scanned.'),
+            behavior: SnackBarBehavior.floating,
           ),
         );
 

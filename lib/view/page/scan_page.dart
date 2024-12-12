@@ -210,6 +210,7 @@ class _ScanState extends State<Scan> {
       content: Text(message),
       backgroundColor: isError ? Colors.red : Colors.green,
       duration: const Duration(seconds: 3),
+      behavior: SnackBarBehavior.floating,
     );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }

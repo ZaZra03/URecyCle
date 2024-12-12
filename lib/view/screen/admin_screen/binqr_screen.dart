@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:qr_flutter/qr_flutter.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import '../../../constants.dart';
 
 class BinQRScreen extends StatefulWidget {
@@ -13,6 +15,7 @@ class BinQRScreen extends StatefulWidget {
 }
 
 class _BinQRScreenState extends State<BinQRScreen> {
+  static const String _fixedSalt = "urecycle_salt2024";
   final Map<String, String> _binQRData = {
     'Plastic': '',
     'Metal': '',
@@ -28,10 +31,16 @@ class _BinQRScreenState extends State<BinQRScreen> {
   }
 
   void _generateQR(String binType) {
+    final randomValue = Random().nextInt(1 << 32).toString();
+    final qrData = jsonEncode({
+      "binType": binType,
+      "hash": sha256.convert(utf8.encode('$binType$_fixedSalt$randomValue')).toString(),
+    });
     setState(() {
-      _binQRData[binType] = '${binType}_${Random().nextInt(100000)}';
+      _binQRData[binType] = qrData;
     });
   }
+
 
   void _generateAllQRs() {
     _binQRData.keys.forEach(_generateQR);
@@ -44,7 +53,6 @@ class _BinQRScreenState extends State<BinQRScreen> {
         ? {specificBin: _binQRData[specificBin]!}
         : _binQRData;
 
-    // Generate a separate page for each QR code
     binsToExport.forEach((bin, qrData) {
       pdf.addPage(
         pw.Page(
@@ -76,7 +84,6 @@ class _BinQRScreenState extends State<BinQRScreen> {
       );
     });
 
-    // Save the PDF file to the public Downloads folder
     final directory = Directory('/storage/emulated/0/Download');
     if (!directory.existsSync()) {
       directory.createSync(recursive: true);
@@ -84,14 +91,12 @@ class _BinQRScreenState extends State<BinQRScreen> {
     final file = File('${directory.path}/BinQRReport.pdf');
     await file.writeAsBytes(await pdf.save());
 
-    // Show confirmation
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('PDF saved to Downloads folder: ${file.path}')),
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -135,8 +140,8 @@ class _BinQRScreenState extends State<BinQRScreen> {
                     ),
                     const SizedBox(height: 16),
                     Wrap(
-                      spacing: 8.0, // Space between items
-                      runSpacing: 4.0, // Space between lines
+                      spacing: 8.0,
+                      runSpacing: 4.0,
                       children: [
                         ElevatedButton.icon(
                           onPressed: () => _exportToPdf(specificBin: entry.key),
